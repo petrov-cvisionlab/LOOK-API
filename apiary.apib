@@ -1,0 +1,2681 @@
+FORMAT: 1A
+HOST: http://docs.look.apiary.io/
+
+
+
+# LOOK
+
+The API works over the HTTP 1.1 protocol. It exposes a set of resources, which can be used to retrieve and/or modify 
+application state. States of resources are represented in JSON. Operations are specified by HTTP request methods, their 
+parameters – by URI query string. Response codes are (subset of) those defined by the HTTP standard. The API is stateless.
+
+The application consists of three major parts: **_core_**, **_engine_** and **_data service_**. 
+Each part exposes its own resources.
+
+The **_core_** is always running and performs general maintenance functions.
+
+The **_engine_** is the main functional component. It retrieves data from input device, performs tracking and 
+classification of faces and bodies, and provides data for data service to collect. It can be started and stopped via 
+state resource.
+
+The **_data service_** is responsible for collecting recognition data to and retrieving it from DB. It can be considered 
+part of **_engine_**, but is able to run separately. When data service runs as part of engine, it works in 
+**_active mode_** (collects data) and has a **_current session_**. If it runs separately, it is in **_passive mode_**
+and have no current session (can only retrieve data from previous sessions).
+
+# Resources exposed by core
+<table>
+    <tr> 
+        <th bgcolor="#999999">Name</th>
+        <th bgcolor="#999999">Function</th>
+    </tr>
+    <tr> <td>/log</td> <td> Get log messages. </td> </tr>
+    <tr> <td>/network</td> <td> Network configuration. </td> </tr>
+    <tr> <td>/input_devices</td> <td> Input devices configuration. </td> </tr>
+    <tr> <td>/config</td> <td> Get / set configuration of apllication and system. </td> </tr>
+    <tr> <td>/state</td> <td> Get state of engine and data service, and set it (i.e. start / stop the component). </td> </tr>
+    <tr> <td>/command</td> <td> Reload application data (license, plugins and settings). </td> </tr>
+    <tr> <td>/system</td> <td> Reboot or shut down the system. </td> </tr>
+    <tr> <td>/license</td> <td> Get list of licensed modules. </td> </tr>
+</table>
+
+# Resources exposed by data service
+<table>
+    <tr> 
+        <th bgcolor="#999999">Name</th> 
+        <th bgcolor="#999999">Function</th> 
+    </tr>
+    <tr> <td>/data</td> <td> Get recognition data. </td> </tr>
+</table>
+
+# Resources exposed by engine
+<table>
+    <tr> 
+        <th bgcolor="#999999">Name</th> 
+        <th bgcolor="#999999">Function</th> 
+    </tr>
+    <tr> <td>/video</td> <td> Get video stream with recognition visualization marks. </td> </tr>
+    <tr> <td>/snapshots</td> <td> Save snapshot image of input video stream. </td> </tr>
+    <tr> <td>/notification_service</td> <td> Event notification. </td> </tr>
+</table>
+
+# Request
+The Request-URI have form
+
+    /resource_id [ ?query_string ] 
+     
+where expression in square brackets is optional.
+
+The *query_string* can have two forms:  
+1. series of pairs parameter=value, connected with the “&” character;  
+2. single value without parameter name.  
+Second form is used when operation has single parameter.
+
+Request must contain header field _Host_ required by HTTP 1.1:  
+Host: *host:port*  
+where  
+*host* - host domain name specified by configuration parameter $.system.web.domain or IP address;  
+*port* - pre-configured port number.
+
+If a request has body, it must include header fields Content-Type with value _application/json_ and _Content-Length_.
+
+# Response
+The possible HTTP status values are listed in the following table.
+<table>
+    <tr> 
+        <th bgcolor="#999999">Status</th> 
+        <th bgcolor="#999999">Reason</th> 
+    </tr>
+    <tr> <td>200 OK</td> <td>Operation completed successfully.</td> </tr>
+    <tr> <td>201 Created</td> <td>Resource created.</td> </tr>
+    <tr> <td>400 Bad Request</td> <td>The request has incorrect syntax or structure.</td> </tr>
+    <tr> <td>401 Unauthorized</td> <td>The request requires user authentication.</td> </tr>
+    <tr> <td>404 Not Found</td> 
+        <td>Resource specified in Request-URI is not found. Possible causes are incorrect resource identifier;
+            resource is provided by the engine or data service which is not running.
+    </td> </tr>
+    <tr> <td>500 Internal Server Error</td> <td>Internal application error.</td> </tr>
+    <tr> <td>503 Service Unavailable</td> 
+        <td>Operation could not be performed because application is in process of transition to another state 
+            (for example, engine is starting).
+    </td> </tr>
+</table>
+
+If response has body, it contains header fields _Content-Length_ and _Content-Type_.  
+If body is text message, value of _Content-Type_ is **text/plain; charset=UTF-8**,
+if body is JSON - **application/json; charset=UTF-8**.
+
+
+# Authentication
+
+Requests from localhost or with GET method do not require authentication. 
+All other requests require authentication using Basic scheme, as described in RFC 2617. 
+The authentication parameter realm has value Look.
+
+
+
+
+
+
+
+
+
+
+# Group Log
+
+The log resource gives access to the current session log, which contains informational and error messages.
+
+    JSON data  
+        { "events": [ event-list ] },  
+    where  
+        event:  
+        {  
+          "type": "type",  
+          "priority": "priority",  
+          "domain": "domain",  
+          "msg": "message"  
+        }  
+
+Event fields:
+
+<table>
+    <tr> 
+        <th bgcolor="#999999">Field</th>
+        <th bgcolor="#999999">Type</th>
+        <th bgcolor="#999999">Description</th>
+    </tr>
+    <tr> <td>type</td> <td>String</td> <td>Event type. There are several types, but only type “Msg” (message event) is documented. Others depend on implementation. The client should count all events for purpose of index calculation, but output only message events.</td> </tr>
+    <tr> <td>priority</td> <td>String</td> <td>Event priority. Possible values in order of increasing priority: info, notice, warning, error, critical, alert, emergency. The last three are very rare in practice. Also undocumented values can exist.</td> </tr>
+    <tr> <td>domain</td> <td>String</td> <td>Name of the application subsystem (e.g. module) that produced the event.</td> </tr>
+    <tr> <td>msg</td> <td>String</td> <td>Message text. It is pre-formatted with spaces and new line characters (\n).</td> </tr>
+</table>
+
+_Also undocumented fields can exist._
+
+## GET /log{?begin_idx,end_idx}
+
++ Parameters
+ + begin_idx = `0` (optional, number)
+  0-based index of the first event to return. If absent, assumed = 0.
+ + end_idx = `0` (optional, number)
+  0-based index of one past the last event to return. If absent, return events up to last one.
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "events": [ 
+                    { 
+                        "domain": "", 
+                        "msg": "Look daemon is starting...", 
+                        "priority": "info", 
+                        "type": "Msg"
+                    }
+                ]
+            }
+
+
+            
+
+
+
+
+
+
+
+# Group Network
+
+Resources is this group allow to get and set network configuration.
+
+The appliance is shipped with pre-defined set of available network interfaces. This set cannot be changed by user. 
+The user can change configuration of each interface and select which one the API should operate on (the **active interface**).
+
+Resources in this group use object NetworkInterface, which has following structure
+
+    NetworkInterface:
+        {
+            id:
+            is_wlan:
+    
+            ssid:
+            security_method:
+            wpa_passphrase:
+            
+            config_method_dhcp:
+            address:
+            netmask:
+            gateway:
+            dns_nameservers: [ dns_nameserver-list ]
+        }
+        
+where
+
+
+<table>
+    <tr> 
+        <th bgcolor="#999999">Name</th>
+        <th bgcolor="#999999">Type</th>
+        <th bgcolor="#999999">Description</th>
+        
+        
+        <tr> <td>id</td> <td>String</td> <td>Interface ID. Examples: eth1, wlan0</td> </tr>
+        <tr> <td>is_wlan</td> <td>Boolean</td> <td>If interface is wireless.</td> </tr>
+        
+        <tr> <td colspan="3" bgcolor="#999999">WLAN parameters</td> </tr>
+        
+        <tr> <td>ssid</td> <td>String</td> <td>SSID of WLAN to connect to. Present only if is_wlan is true.</td> </tr>
+        <tr> <td>security_method</td> 
+            <td>String</td> 
+            <td>
+                Security method to use in WLAN. Valid values are <br />
+                <<empty/>empty> - use none <br />
+                wep – currently not supported <br />
+                wpa – currently not supported <br />
+                wpa2 <br />
+                Present only if is_wlan is true.
+            </td> 
+        </tr>
+        <tr> <td>wpa_passphrase</td> 
+            <td>String</td> 
+            <td>
+                WPA passphrase. <br />
+                Present only if security method is WPA or WPA2.
+            </td> 
+        </tr>
+        
+        <tr> <td colspan="3" bgcolor="#999999">High-level parameters</td> </tr>
+        
+        <tr> <td>config_method_dhcp</td> <td>Boolean</td> <td>If configuration method is by DHCP.</td> </tr>
+        <tr> <td>address</td> <td>ipv4</td> <td>Address.</td> </tr>
+        <tr> <td>netmask</td> <td>ipv4</td> <td>Netmask.</td> </tr>
+        <tr> <td>gateway</td> <td>ipv4</td> <td>Default gateway. May be empty.</td> </tr>
+        <tr> <td>dns_nameserver</td> <td>ipv4</td> <td>Address of DNS name server.</td> </tr>
+    </tr>
+</table>
+
+When  NetworkInterface object is retrieved from server, the following rules apply.
+
+ - Field wpa_passphrase is absent. - Not true currently and questionable generally.
+ - If configuration method is DHCP, high-level parameters (except config_method) specify values assigned by DHCP. 
+   A parameter can be absent if its value currently cannot be determined (probably because interface is down).
+
+## Network Interfaces [/network/interfaces]
+
+This resource represents the collection of system's network interfaces and allows to get their configuration.
+
+### Get configuration of network interfaces [GET]
+
+####Response
+
+    JSON data
+    [ NetworkInterface-list ]
+
++ Response 200 (application/json)
+ + Body
+ 
+             [ 
+                { 
+                    "address": "192.168.0.62", 
+                    "config_method_dhcp": true, 
+                    "dns_nameservers": [ 
+                        "192.168.0.5", 
+                        "8.8.8.8" 
+                    ], 
+                    "gateway": "192.168.0.5", 
+                    "id": "eth0", 
+                    "is_wlan": false, 
+                    "netmask": "255.255.255.0" 
+                }, 
+                { 
+                    "address": "192.168.0.112", 
+                    "config_method_dhcp": true, 
+                    "dns_nameservers": [ 
+                        "192.168.0.5", 
+                        "8.8.8.8" 
+                    ], 
+                    "id": "wlan0", 
+                    "is_wlan": true, 
+                    "netmask": "255.255.255.0", 
+                    "security_method": "wpa2", 
+                    "ssid": "...", 
+                    "wpa_passphrase": "..." 
+                } 
+            ]
+
+
+## Network interface [/network/interfaces/{id}]
+
+This resource represents network interface with ID id.
+
++ Parameters
+
+ + id (required, string, `eth0`)
+  The `id` is one the IDs retrieved in GET /network/interfaces request.
+
+### Get [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "address": "192.168.0.62", 
+                "config_method_dhcp": true, 
+                "dns_nameservers": [ 
+                    "192.168.0.5", 
+                    "8.8.8.8" 
+                ], 
+                "gateway": "192.168.0.5", 
+                "id": "eth0", 
+                "is_wlan": false, 
+                "netmask": "255.255.255.0" 
+            }
+
+
+### Put [PUT]
+
+Set network interface configuration.
+
+#### Request
+
+    JSON data
+    NetworkInterface
+
+Fields that do not change may be absent.
+
+Fields id, type are ignored and may be absent.
+
+If after applying specified settings security method should be WPA or WPA2, the field wpa_passphrase is ignored and 
+may be absent. (This behavior might change.)
+
+
+#### Response
+
+If the client operates from remote host, and changed interface is the active one, and the call is successful, 
+the connection is closed and the client receives no response. After that it can connect again, possibly using 
+new address if it has changed.
+
+If id does not correspond to any interface, the response status is 404 Not Found.
+
+If DHCP network configuration is activated and there is no DHCP server available, the response status is 409 Conflict 
+and the body contains reason text.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "config_method_dhcp": false,
+                "address": "192.168.0.62",
+                "netmask": "255.255.255.0",
+                "gateway": "192.168.0.5",
+                "dns_nameservers": [ "192.168.0.5", "8.8.8.8" ]
+            }
+
++ Response 200
+
+
+## SSID`s network interface [/network/interfaces/{id}/ssids]
+
+This resource represents the set of SSIDs of networks currently available via WLAN network interface with ID id. 
+
+### Get available SSIDs [GET]
+
+#### Response
+
+    JSON data
+    [ ssid-list ]
+    
+where _ssid_ is a String.
+
+If _id_ does not correspond to WLAN interface, response status is 404 Not Found.
+
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [
+                "123",
+                "234"
+            ]
+
+
+
+## Active Network Interface ID configuration [/network/active_interface_id]
+
+This resource holds the ID of active network interface.
+
+### Get active network interface ID [GET]
+
+#### Response
+
+    JSON data
+    { "id": id }
+    
+where _id_ is a String specifying the interface ID.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+             { 
+                "id": "eth0" 
+            }
+
+### Put [PUT]
+
+#### Request
+
+    JSON data
+    { "id": id }
+    
+where _id_ is a String specifying the interface ID.
+
+
+#### Response
+
+If the client operates from remote host and the call is successful, the connection is closed and the client receives no 
+response. After that it can connect again, using new active interface address.
+
+If specified ID does not correspond to any interface, the response status is 400 Bad Request.
+
++ Request (application/json)
+
+ + Body
+ 
+            {
+                "id": "wlan0"
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Input Devices
+
+
+Resources is this group allow to configure input devices.
+
+Input devices are distinguished by type. Look supports cameras and natural interaction (NI) devices (Kinect / Xtion).
+
+A device can be connected to the system locally (via USB for example) or be available via network. They are called 
+**local device** and **network device** respectively. Local devices are read-only in API; the client can only select 
+one of them as active. Network devices can be added, updated and deleted by the client.
+Currently only cameras can be network devices.
+
+More than one device of same type can be available. For example, one could have second camera that is differently placed, 
+or used for something beside Look. Each device has the **location**.
+
+To distinguish similar local devices user needs to establish an (informal) agreement about which device is plugged to 
+which port. For example, always plug “top” camera to left USB port on motherboard's back, and “bottom” camera to 
+right USB port. Then in API a **system location** (data identifying a port) of a device can be used as a reflection of 
+its physical placement / purpose / other distinctive property. For local devices the location is its system location.
+
+For network devices the location is an URL.
+
+The active input device is identified by both its type and location. If a device of configured type is not found at 
+configured location, the engine will not start.
+
+**Note**: currently only one connected (local) NI device is supported. Its location is empty.
+
+If local device configured as active is unplugged, it still is included in device list, with field plugged set to false. After activation of other (plugged) device, unplugged device is discarded.
+
+Any action changing active input device location (including device switching) is not allowed while engine is running (application is in live mode). The response status in such case is 409 Conflict with corresponding text message. The client must stop the engine, perform configuration changes and start the engine again.
+
+Resources in this group use following data types.
+Data type DeviceId represents input device ID. It is an unsigned integer number.
+
+Data type Device represents an input device. It is an object with the following structure
+
+    Device:
+        {
+            id:
+            type:
+            connection:
+            location:
+            name: 
+            plugged:
+        }
+    
+where
+
+<table>
+    <tr> 
+        <th bgcolor="#999999">Field</th>
+        <th bgcolor="#999999">Type</th>
+        <th bgcolor="#999999">Description</th>
+        
+        
+        <tr> <td>id</td> <td>DeviceId</td> <td><Device ID, assigned by the server./td> </tr>
+        <tr> <td>type</td> <td>String</td> <td>Device type. Possible values are Camera or NIDevice (natural interaction device).</td> </tr>
+        <tr> <td>connection</td> <td>String</td> <td>Device connection type. Possible values are local and network.</td> </tr>
+        <tr> 
+            <td>location</td> 
+            <td>String</td> 
+            <td>
+                Device location. <br />
+                For local devices this is system location, for example usb-0000:00:1a.0-1.3. <br />
+                For network devices this is URL. <br />
+            </td> 
+        </tr>
+        <tr> 
+            <td>name</td> 
+            <td>String</td> 
+            <td>
+                Device name. <br />
+                For local devices it is read-only. It is empty (cannot be determined) if device is unplugged. 
+                Example: Microsoft® LifeCam HD-5000. <br />
+                For network devices the name must be set by the client. <br />
+            </td> 
+        </tr>
+        <tr> 
+            <td>plugged</td> 
+            <td>Boolean</td> 
+            <td>
+                Indicates if local device is currently plugged. This field is absent for network devices. <br />
+                There is only one case when this field is false – if active local device is unplugged.
+            </td> 
+        </tr>
+</table>
+
+## Input Devices [/input_devices/devices]
+
+This resource represents all input devices known to the system.
+
+### Get all devices [GET]
+
+#### Response
+
+    JSON data
+    [ Device-list ]
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [ 
+                { 
+                    "connection": "local", 
+                    "id": 1, 
+                    "location": "usb-0000:00:1d.0-1.6", 
+                    "name": "A4 TECH USB2.0 PC Camera J", 
+                    "plugged": true, 
+                    "type": "Camera" 
+                }, 
+                { 
+                    "connection": "network", 
+                    "id": 2, 
+                    "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                    "name": "FishEye", 
+                    "type": "Camera" 
+                } 
+            ]
+
+### Add network input device - camera [POST]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) assigned to device by the server.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 201 (application/json)
+ + Header
+ 
+            Location : http://root/input_devices/devices/2
+
+ + Body
+ 
+            2
+
+## Network Input Devices [/input_devices/devices/network]
+
+This resource represents network input devices (cameras).
+
+### Get network input devices - cameras [GET]
+
+#### Response
+
+    JSON data
+    [ Device-list ]
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            [ 
+                { 
+                    "connection": "network", 
+                    "id": 2, 
+                    "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                    "name": "FishEye", 
+                    "type": "Camera" 
+                } 
+            ]
+
+### Add network input device - camera [POST]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) assigned to device by the server.
+    
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 201 (application/json)
+ + Header
+ 
+            Location : http://root/input_devices/devices/2
+
+ + Body
+ 
+            2
+
+### Delete all network input devices - cameras [DELETE]
+
+#### Response
+
+If active input device is network device and engine is running (application is in live mode), 
+response status is 409 Conflict.
+
++ Response 200
+
+## Input Device [/input_devices/devices/{id}]
+
+This resource represents input device.
+
++ Parameters
+    + id (required, number, `1`) 
+     The `id` is one of the IDs retrieved in GET /input_devices/devices request.
+
+### Get input device [GET]
+
+#### Response
+
+    JSON data
+    Device
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            { 
+                "connection": "local", 
+                "id": 1, 
+                "location": "usb-0000:00:1d.0-1.6", 
+                "name": "A4 TECH USB2.0 PC Camera J", 
+                "plugged": true, 
+                "type": "Camera" 
+            }
+
+### Update network input device - camera [PUT]
+
+#### Request
+
+    JSON data
+    Device
+    
+Only fields location and name are required, the rest is ignored.
+
+#### Response
+
+If id does not correspond to any device, the response status is 404 Not Found.
+
+If id identifies local device, the response status is 405 Method Not Allowed.
+
+If id identifies active input device, field location is being updated and engine is running 
+(application is in live mode), response status is 409 Conflict.
+
++ Request (application/json)
+
+ + Body
+ 
+            { 
+                "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                "name": "FishEye"
+            }
+
++ Response 200
+
+### Delete network input device - camera [DELETE]
+
+#### Response
+
+If id does not correspond to any device, the response status is 404 Not Found.
+
+If id identifies local device, the response status is 405 Method Not Allowed.
+
+If id identifies active input device and engine is running (application is in live mode), response status is 409 Conflict.
+
++ Response 200
+
+## Active Input Device [/input_devices/active_id]
+
+This resource represents active input device ID
+
+### Get active device ID [GET]
+
+#### Response
+
+    JSON data
+    Identifier (DeviceId) of active device or null if active device is not set.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            1
+
+## Active Input Device [/input_devices/active_id?{id}]
+
+### Set active input device ID [PUT]
+
+#### Response
+
+If engine is running (application is in live mode), response status is 409 Conflict.
+
+If id does not correspond to any device, the response status is 400 Bad Request.
+
++ Parameters
+    + id (required, number, `1`) 
+     The `id` is one of the IDs retrieved in GET /input_devices/devices request.
+
++ Response 200
+
+
+## Input Devices and Active Input Device [/input_devices]
+
+This is a composite resource combining resources /input_devices/devices and /input_devices/active_id.
+
+### Get all input devices and active device ID [GET]
+
+#### Response
+
+    JSON data
+    {
+        "devices": [ Device-list ],
+        "active_id": active_id
+    }
+    
+See /input_devices/devices and /input_devices/active_id for details.
+
++ Response 200 (application/json)
+
+ + Body
+ 
+            { 
+                "active_id": 2, 
+                "devices": [ 
+                    { 
+                        "connection": "local", 
+                        "id": 1, 
+                        "location": "usb-0000:00:1d.0-1.6", 
+                        "name": "A4 TECH USB2.0 PC Camera J", 
+                        "plugged": true, 
+                        "type": "Camera" 
+                    }, 
+                    { 
+                        "connection": "network", 
+                        "id": 2, 
+                        "location": "rtsp://user:pass@fisheye:8554/CH001.sdp?tcp", 
+                        "name": "FishEye", 
+                        "type": "Camera" 
+                    } 
+                ] 
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Config
+
+This resource allows to get and set configuration.
+
+Configuration settings logically fall into two categories: **communication settings** and **engine settings**. 
+The **communication settings** include domain, password etc. The **engine settings** apply to main application functionality.
+
+    JSON data
+    {
+        "modules": [ module-list ]
+        "system": {
+            "web": [ parameter-list ],
+            "authorization": [ parameter-list ]
+        }
+    }
+
+The _module-list_ contains the list of application modules with their parameters.
+
+    module:
+        {
+            "name": {
+                "description": "description",
+                "parameters": [ parameter-list ]
+            }
+        }
+
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>name</td> <td>String</td> <td>Module name.</td> </tr>
+    <tr> <td>description</td> <td>String</td> <td>Module description.</td> </tr>
+</table>
+
+Each _parameter_ in parameter-list has the following structure:
+
+    parameter:
+        {
+            "name": "name",
+            "display_name": "display_name",
+            "description": "description",
+            "type": "type",
+            "requires_restart": requires_restart,
+            "value": value
+        }
+        
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>name</td> <td>String</td> <td>Internal parameter name. It is the same as in configuration file.</td> </tr>
+    <tr> <td>display_name</td> <td>String</td> <td>Parameter name to display.</td> </tr>
+    <tr> <td>description</td> <td>String</td> <td>Parameter description. Can be empty.</td> </tr>
+    
+    <tr> <td>type</td> <td>String</td> 
+         <td>
+            <table>
+                <th bgcolor="#999999">Parameter type</th>
+                <th bgcolor="#999999">Possible values are</th>
+                <tr> <td>int</td> <td>Integer number.</td> </tr>
+                <tr> <td>real</td> <td>Real number.</td> </tr>
+                <tr> <td>bool</td> <td>Boolean.</td> </tr>
+                <tr> <td>string</td> <td>String.</td> </tr>
+                <tr> <td>ipv4</td> <td>IPv4 address (dotted quad).</td> </tr>
+                <tr> <td>map</td> <td>Map. The value of this type is an object. Only object values can be changed. Keys cannot be removed or inserted.</td> </tr>
+            </table>
+         </td> 
+    </tr>
+    
+    <tr> <td>requires_restart</td> <td>Boolean</td> 
+         <td>Specifies if changing value of this parameter requires engine restart.
+             This field can be absent in parameters that do not belong to modules (e.g. network configuration parameters).
+         </td> 
+    </tr>
+    <tr> <td>value</td> <td>Depends on type</td> <td>Parameter value.</td> </tr>
+</table>
+
+**Also unspecified fields can exist.**
+
+The _web_ key contains parameters specifying high-level communication options:
+
+<table>
+    <th bgcolor="#999999">Name</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>domain</td> <td>String</td> <td>Fully qualified domain name of application host. This domain name must be specified in header field Host of API requests.</td> </tr>
+    <tr> <td>ssl_enabled</td> <td>Bool</td> <td>Specifies if SSL/TLS encryption is enabled.</td> </tr>
+</table>
+
+The _authorization_ key contains authorization parameters. Authorization is required for un-safe request methods (PUT). The parameters are:
+
+<table>
+    <th bgcolor="#999999">Name</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>password</td> <td>String</td> <td>Password.</td> </tr>
+</table>
+
+The value is empty string – it is write-only.
+
+The key _"modules"_ belong to engine settings, _"system"_ – to communication settings.
+
+## Current configuration [/config]
+
+### Get current configuration [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "modules": { 
+                    "VisualSnapshotSaver": { 
+                        "description": "Creates snapshots (images) of input video stream.", 
+                        "parameters": [ 
+                            { 
+                                "description": "", 
+                                "display_name": "JPEG compression quality", 
+                                "internal": false, 
+                                "name": "quality", 
+                                "requires_restart": false, 
+                                "type": "int", 
+                                "value": 70, 
+                                "virtual": false 
+                            }
+                        ] 
+                    }
+                }, 
+                "system": { 
+                    "authorization": [ ], 
+                    "web": [ ] 
+                } 
+            } 
+
+### Set configuration [PUT]
+
+#Request
+
+The structure of data is the same as describe above, but certain parts may be absent.
+
+Any of the first-level keys (modules, system) may be absent.
+
+Some or all modules in _module-list_ may be absent. Each module must have the following minimal structure:
+
+    module:
+        {
+            "name": {
+                "parameters": [ parameter-list ]
+            }
+        }
+
+For modules, some or all parameters in each parameter-list may be absent.
+
+Each _parameter_ must have the following minimal structure:
+
+    parameter:
+        {
+            "name": "name",
+            "value": value,
+        }
+
+Any of the keys in _"system"_ (_web_, _authorization_) may be absent.
+
+It is forbidden to change communication settings together with engine settings in one API call. 
+The reason is that changing communication settings involves closing of network connection.
+
+# Response
+
+Certain engine settings require restart of engine and/or data service in order to apply them. 
+If the component is running and have to restart, response has body with JSON
+
+    { "restart": true }
+    
+Restart is performed automatically. Changing input device always requires restart of engine.
+
+If restart is not needed, OK response has no body.
+
+If communication settings are changes successfully, connection is closed and the client receives no response.
+
++ Request (application/json)
+ + Body
+    
+            { 
+                "modules": { 
+                    "VisualSnapshotSaver": { 
+                        "parameters": [ 
+                                "name": "quality", 
+                                "value": 85, 
+                            } ,
+                        ] 
+                    } 
+                }, 
+                "system": { 
+                    "authorization": [ ], 
+                    "web": [ ] 
+                } 
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group State
+
+This resource allows to get and set application state. The application state consists of engine state and data service state.
+
+There are four states for **engine** and **data service**: _stopped_, _starting_, _running_, _stopping_.
+
+If the **engine** is _starting_, _running_ or _stopping_, **data service** is doing the same (because it is part of engine). 
+If **engine** is _stopped_, **data service** can be in any state.
+
+    JSON data
+    {
+        "engine": "state",
+        "data_service": "state"
+    }
+    
+where _state_ is one of:
+
+ - stopped
+ - starting
+ - running
+ - stopping
+
+## Current state [/state]
+
+### Get current application state [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "data_service": "stopped", 
+                "engine": "stopped" 
+            }
+
+### Set application state, i. e. start or stop engine and/or data service [PUT]
+
+# Request
+
+Starting and stopping engine can take several seconds, so the requests must have appropriate timeout.
+
+Request JSON data structure is the same as described above, where **state** is _running_ to start and _stopped_ to stop 
+**engine** or **data service**.
+The combination of running engine and stopped data service is invalid.
+
+# Response
+
+If the application is already in requested state, response with status 200 OK is returned immediately.
+
+If the engine or data service is in state transitional to requested, request is handled as if it was in state opposite 
+to requested. For instance, if engine is starting and request with started is made, this request is handled as if 
+engine was stopped, i.e. set to wait until operation is completed.
+
+If the engine or data service is starting and stop is requested, or it is stopping and start is requested, 
+response status is 503 Service Unavailable and body is as if GET /state request was made.
+
+If request is to start engine and stop data service, response status is 400 Bad Request.
+
++ Request (application/json)
+ + Body
+ 
+            { 
+                "data_service": "running", 
+                "engine": "running" 
+            }
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Command
+
+This resource allows to send command to reload application data (license, plug-ins (modules) and settings). 
+The core with HTTP server is not restarted.
+
+## Send command [/command?{reload}]
+
++ Parameters
+    + reload (required, string)
+    
+        Reload application data. Has no value.
+
+        + Values
+            + `reload`
+
+
+### Execute application command [PUT]
+
+# Response
+
+Response has no data.
+
+If **engine** or **data service** is not _stopped_, response status is 503 Service Unavailable.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group System
+This resource allows to reboot or shut down the system.
+
+## System command [/system?{command}]
+
++ Parameters
+    + command (required, string)
+    
+        Reboot or shut down the system
+
+        + Values
+            + `reboot`
+            + `shut_down`
+
+### Execute system command [PUT]
+
+# Request
+
+If the **engine** or **data service** is _running_, it is stopped before executing command. 
+This can take several seconds, so the request must have appropriate timeout.
+
+# Response
+
+Response has no data.
+
+Response status reflects result of executing corresponding system administration command, 
+i. e. result of initiating requested process.
+
++ Response 200
+
+
+
+
+
+
+
+
+
+
+# Group License
+This resource allows to get list of licensed modules.
+
+    JSON data
+    { "modules": [ module-list ] }
+    
+    module:
+        {
+            "name": "name",
+            "description": "description"
+        }
+
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>name</td> <td>String</td> <td>Module name.</td> </tr>
+    <tr> <td>description</td> <td>String</td> <td>Module description.</td> </tr>
+</table>
+
+## Licensed modules [/license]
+
+### Get list of licensed modules [GET]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "modules": [ 
+                    { 
+                        "description": "Inputs video data and body detection events from natural interaction device.", 
+                        "name": "NIDeviceReader" 
+                    }
+                ] 
+            } 
+
+
+
+
+
+
+
+
+
+
+# Group Data
+
+This resource allows to retrieve recognition data from current or previous sessions.
+
+# Terminology
+When an object is detected, the tracking system forms an internal image of it. This image persists for some time 
+after object has disappeared from sight of input device. If the object appears in sight again until its image 
+is deleted, it can be recognized as the same object and assigned the same identifier. It is said that object has 
+**exited** and **reentered** to a scene. When tracking system has deleted object's image, the object is **lost**. 
+Next time this object is detected it will be assigned other identifier.
+
+## GET /data?{type,time,columns,parameters}
+
+# Request
+
+## Query parameters description
+
+### type  
+Specifies type of requested objects.  
+There are two object types: _Face_ and _Body_. They are tracked separately. 
+For tracking bodies a natural interaction input device is needed.
+Only one object type can be specified in a request.
+         
+### time
+Objects that was in sight during this time period will be returned.  
+The possible values are:
+<table>
+    <th bgcolor="#999999">Value</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>now</td> <td>Return objects that was in sight in last frame of current session. Data service must be in active mode.</td> </tr>
+    <tr> <td>time-time</td> <td>Return objects that was in sight during this time period. See below for details.</td> </tr>
+</table>
+
+The _time_ values are specified as UTC in ISO 8601 extended format:
+
+    YYYY-MM-DDTHH:MM:SS
+    
+### columns
+Specifies list of object attributes to return.  
+The list format is comma-separated (without spaces).  
+Attributes are divided into time attributes and classification attributes. 
+Time attributes are common to faces and bodies. Classification attributes are specific to faces.  
+The time attributes are (detailed description is in Response section):
+
+<table>
+    <th bgcolor="#999999">Name</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>enter_time</td> <td>Time when object was (first) detected.</td> </tr>
+    <tr> <td>exit_time</td> <td>Time when object was last seen.</td> </tr>
+    <tr> <td>time_periods</td> <td>Sequence of time periods during which object was in sight and exited in between.</td> </tr>
+</table>
+
+Time attributes can be queried only for time period, but not for the current frame.  
+Classification attributes of faces are (detailed description is in Response section):
+<table>
+    <th bgcolor="#999999">Name</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>gender</td> <td>Person gender.</td> </tr>
+    <tr> <td>gender_confidence</td> <td>Confidence of gender value.</td> </tr>
+    <tr> <td>age</td> <td>Person age.</td> </tr>
+    <tr> <td>age_confidence</td> <td>Confidence of age value.</td> </tr>
+</table>
+
+Classification attributes can be queried for time period or current frame. 
+        
+### parameteres
+List of statistic parameters to return.  
+Statistic parameters are properties of sets of objects as opposed to individual objects.  
+This query parameter is valid only for the Face objects and current session (time=now).  
+The list format is comma-separated (without spaces).  
+The statistic parameters are (detailed description is in Response section):
+
+<table>
+    <th bgcolor="#999999">Name</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>primary_gender</td> <td>Gender of the Face object longest in view (for all view periods) during the current session.</td> </tr>
+    <tr> <td>majority_gender</td> <td>Current most prominent gender.</td> </tr>
+</table> 
+
+# Response
+
+    JSON data
+    {
+      "objects": [ object-list ],
+      "primary_gender": primary_gender,
+      "majority_gender": majority_gender,
+      "main_person": main_person, 
+    }
+    
+    object:
+        {
+            "session_id": session_id,
+            "id": id,
+                 "distance": distance,
+                 "face_time": face_time,
+                 "dwell_time": dwell_time,
+                 "screen_position_x": screen_position_x,
+                 "screen_position_y": screen_position_y,
+            "enter_time": enter_time,
+            "exit_time": exit_time,
+            "clean_exit": clean_exit,
+            "time_periods": [ time-period-list ],
+            "age": age,
+            "age_confidence": age_confidence,
+            "gender": gender,
+            "gender_confidence": gender_confidence
+        }
+    
+    time-period:
+        {
+            "enter_time": enter_time,
+            "exit_time": exit_time
+        }
+        
+Some fields can be absent if they were not specified in query. The object-list can be empty.
+
+The following tables describes the fields.
+
+### Identifiers
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>session_id</td> <td>Integer</td> <td>Data service session ID. Present only if request was made for time period.</td> </tr>
+    <tr> <td>id</td> <td>Integer</td> <td>Object ID, unique per session. A pair of session_id and id makes up an installation-wide unique identifier.</td> </tr>
+</table>
+
+###  Common object attributes
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>enter_time</td> <td>DateTime</td> <td>Time when object was (first) detected.See “Results for time periods” for details.</td> </tr>
+    <tr> <td>exit_time</td> <td>DateTime</td> <td>Time when object was last seen. Note that this can be time when object exited or was lost.See “Results for time periods” for details.</td> </tr>
+    <tr> <td>clean_exit</td> <td>Boolean</td> <td>Tells if exit_time is taken from actually recorded exit event as opposed to last time object was seen before abnormal application termination.Present only when data for time period was requested.</td> </tr>
+    <tr> <td>time-period.enter_time</td> <td>DateTime</td> <td>Start time of time period. The enter_time of first period is the same as object.enter_time.See “Results for time periods” for details.</td> </tr>
+    <tr> <td>time-period.exit_time</td> <td>DateTime</td> <td>End time of time period. The exit_time of last period is the same as object.exit_time.See “Results for time periods” for details.</td> </tr>
+</table>
+
+### Face classification attributes
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>age</td> <td>Real</td> <td>Person age.</td> </tr>
+    <tr> <td>age_confidence</td> <td>Real</td> <td>Confidence of age value in interval [0, 1].</td> </tr>
+    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and face in meters.</td> </tr>
+    <tr> <td>face_time</td> <td>Real</td> <td>Sum of all periods when current face being detected.</td> </tr>
+    <tr> <td>dwell_time</td> <td>Real</td> <td>Period from the first face appearance to the current moment. </td> </tr>
+    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a face center in pixels.</td> </tr>
+    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a face center in pixels.</td> </tr>
+    <tr> <td>gender</td> <td>Integer</td> <td>Person gender: -1 for males, 1 for females, 0 for children under 10 years old.</td> </tr>
+    <tr> <td>gender_confidence</td> <td>Real</td> <td>Confidence of gender value in interval [0, 1].</td> </tr>
+</table>
+
+### Statistic parameters        
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>primary_gender</td> 
+         <td>Integer</td> 
+         <td>Gender of the Face object longest in view (for all view periods) during the current session. 
+             If there are two or more objects with equal duration, the one that was detected first is returned.<br />
+             Value: -1 for male, 1 for female, null if no Face objects have been seen yet.
+         </td> 
+    </tr>
+    <tr> <td>majority_gender</td> 
+         <td>Integer</td> 
+         <td>Represents the current most prominent gender. The algorithm is as follows.<br />
+             &emsp;Children younger than 10 years (for whom gender is not determined) are not counted.<br />
+             &emsp;If there are no persons, return null.<br />
+             &emsp;Else, if number of persons of one gender in the current frame is greater, return that gender.<br />
+             &emsp;Else compare sums of confidences for both genders in the current frame. If one sum is greater, return corre­sponding gender.<br />
+             &emsp;Else compare sums of durations of last view periods for both genders. If one sum is greater, return corre­sponding gender.<br />
+             &emsp;Else compare durations of last view periods for one male and one female with maximal values. If one is greater, return corresponding gender.<br />
+             &emsp;Else return male gender.<br />
+             &emsp;Value: -1 for male, 1 for female, null if there are no active male or female Face objects.</td> 
+    </tr>
+    <tr> <td>main_person</td> 
+         <td>Integer</td> 
+         <td> ID of face that:<br />
+              &emsp;1) has maximal  face_time parameter.<br />
+              &emsp;2) has the minimal distance parameter. (for faces that satisfied the previous condition)<br />
+              &emsp;3) has dwell_time face_time parameter. (for faces that satisfied the previous conditions)<br />
+        </td> 
+    </tr>
+</table>
+
+Here the DateTime type is String containing date and time written as UTC in ISO 8601 extended format:
+
+    YYYY-MM-DDTHH:MM:SS
+
+When data for time period is requested, returned values of classification attributes correspond to time moment exit_time.
+
+## Results for time periods  
+
+When request is made for a time period, the application determines which objects were in sight during this period and then returns the most complete information it has on that objects. The enter_time and exit_time parameters contain the very first (last) time an object was seen. So the enter_time might be before requested period and exit_time might be after it. The same applies to time_periods parameter - it contains all periods when person was in sight.  
+
+For example, consider the following timeline:  
+
+    person_time_1_1   - person was first detected  
+    ...  
+    person_time_1_2   - person temporarily disappeared  
+    ...  
+    query_time1 
+    ...  
+    person_time_2_1   - person re-entered  
+    ...  
+    query_time2  
+    ...  
+    person_time_2_2   - person was lost  
+
+The requested time period is
+
+    time=query_time1-query_time2
+    
+The result would be:
+
+    "objects": [
+      {
+        "age": ...,   <- corresponds to person_time_2_2
+        ... 
+        "enter_time": person_time_1_1,
+        "exit_time": person_time_2_2,
+        ... 
+        "time_periods": [
+          {
+            "enter_time": person_time_1_1,
+            "exit_time": person_time_1_2
+          },
+          {
+            "enter_time": person_time_2_1,
+            "exit_time": person_time_2_2
+          }
+        ],
+        ...
+      }
+    ]
+
++ Response 200 (application/json)
+ + Body
+ 
+            { 
+                "objects": [ 
+                    { 
+                        "age": "24.8413", 
+                        "age_confidence": "0.489896", 
+                        "clean_exit": "false", 
+                        "enter_time": "2014-03-19T08:41:59", 
+                        "exit_time": "2014-03-19T08:42:25", 
+                        "gender": "-1", 
+                        "gender_confidence": "0.460317", 
+                        "id": "0", 
+                        "session_id": "147", 
+                        "time_periods": [ 
+                            { 
+                                "enter_time": "2014-03-19T08:41:59", 
+                                "exit_time": "2014-03-19T08:42:25" 
+                            } 
+                        ] 
+                    }
+                ] 
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Video
+
+This resource allows to get video stream with recognition visualization marks in M-JPEG format.
+
+## Video stream [/video]
+
+### Get video stream [GET]
+
+# Response
+
+Response has M-JPEG format, which essentially is a sequence of JPEG images. The header contains field
+
+    Content-Type: multipart/x-mixed-replace;boundary=multipart_boundary
+
+Each frame's block of data has format
+
+    --multipart_boundary\r\n
+    Content-Type: image/jpeg\r\n
+    Content-Length: jpeg-length\r\n
+    \r\n
+    jpeg
+
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Description</th>
+    <tr> <td>jpeg-length</td> <td>Length of frame image JPEG in bytes.</td> </tr>
+    <tr> <td>jpeg</td> <td>Frame image JPEG data.</td> </tr>
+</table>
+
+Frame image size is 640x480 pixels.
+
++ Response 200
+
+ + Headers
+        
+            Content-Type: multipart/x-mixed-replace;boundary=multipart_boundary
+        
+ + Body
+ 
+            --multipart_boundary\r\n
+            Content-Type: image/jpeg\r\n
+            Content-Length: 4\r\n
+            \r\n
+            jpeg
+
+
+
+
+
+
+
+
+
+
+# Group Snapshots
+
+This resource allows to save snapshot image of input video stream. Input video stream is the stream produced by 
+input device. It does not display recognition marks.
+
+## Current snapshots [/snapshots]
+
+### Save snapshot of last input frame and return its URL [POST]
+
+Image is saved in JPEG format. Its parameters and location are determined by settings of VisualSnapshotSaver module and can be configured via API.
+If two or more requests are made for the same frame, snapshot is saved once.
+
+# Response
+
+Successful response has status 201 Created and header field Location specifying absolute URL of created snapshot.
+
+    JSON data
+    { "path": "path" }
+
+where _"path"_ is the path part of URL of saved snapshot image.
+
+The URL path is made by replacing base part of filesystem path, specified by setting 
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_find" : "path"
+                }
+        }
+    } 
+
+with path, specified by setting 
+
+The URL path is made by replacing base part of filesystem path, specified by setting 
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_replace" : "path"
+                }
+        }
+    }
+
+It is the opposite to what Web server does with a path, so configurations of VisualSnapshotSaverHttpInterface 
+and NGINX must be synchronized.
+
+Snapshot file name has form
+
+    date-time.jpg
+    
+where _date-time_ is UTC date and time of corresponding frame, represented according to ISO 8601, 
+with 3-digit milliseconds:
+
+    YYYY-MM-DDThh:mm:ss.sss
+    
+## Example
+
+Path remapping settings:
+
+    { 
+        "modules" : { 
+                "VisualSnapshotSaverHttpInterface" : { 
+                    "path_find" : /var/lib/look/snapshots,
+                    "path_replace" : /snapshot_files
+                }
+        }
+    }
+
+NGINX configuration (relevant part):
+
+    server { 
+        location /snapshot_files { 
+            alias /var/lib/look/snapshots; 
+        }
+    }
+    
+Then the snapshot
+
+    /var/lib/look/snapshots/2012-06-20/2012-06-20T17:26:31.351.jpg
+    
+has URL
+
+    http://kiosk-1:8181/snapshot_files/2012-06-20/2012-06-20T17:26:31.351.jpg
+
++ Response 201 (application/json)
+
+ + Headers
+ 
+            Location: https://localhost:8182/snapshot_files/2012-09-18/2012-09-18T17:07:17.893.jpg
+
+ + Body
+ 
+            {
+                "path" : "/snapshot_files/2012-09-18/2012-09-18T17:07:17.893.jpg" 
+            }
+
+
+
+
+
+
+
+
+
+
+# Group Notifications
+
+This resource allow get notifications by subscriber for subscription events using HTTP.
+
+Common structure of JSON object is:
+
+    Subscriber {
+        "id" : id,
+        "url" : "url",
+        "method" : "method",
+        "wildcard" : wildcard,
+        "event_filters" : [EventFilter-list]
+    }
+
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>id</td> <td>Integer</td> <td>Subscriber ID. This field is read-only.</td> </tr>
+    <tr> <td>url</td> <td>String</td> <td>URL which receives HTTP request on event.</td> </tr>
+    <tr> <td>method</td> <td>String</td> <td>HTTP method used in request to subscriber on event.</td> </tr>
+    <tr> 
+        <td>wildcard</td> 
+        <td>Boolean</td> 
+        <td>
+            If this is a wildcard subscriber. This subscriber get notifications from any event. <br />
+            This attribute cannot be changed after subscriber is created.
+            </td> 
+        </tr>
+</table>
+
+Common structure of EventFilter JSON object is: 
+
+    EventFilter {
+        "event_type" : "event_type",
+        "filter_attribute_field_1" : value,
+        
+        ...
+        "filter_attribute_field_n" : value,
+    }
+    
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>event_type</td> <td>String</td> <td>Type of event group.</td> </tr>
+    <tr> <td>filter_attribute_field_n</td> <td>Depends on type</td> <td>Filter attribute parameter. <br />
+        if field has ‘*’ value then it is mean that this field has all valid values.</td> </tr>
+</table>
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type" : "event_type",
+        "timestamp": timestamp,
+        "event_attribute_field_1": value,
+        ...
+        "event_attribute_field_n": value,
+        "object": {
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+
+where
+
+<table>
+    <th bgcolor="#999999">Field</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>event_type</td> <td>String</td> <td>Type of event group.</td> </tr>
+    <tr> <td>timestamp</td>  <td>Integer</td> <td>Number of milliseconds since 1970-01-01 00:00:00 UTC.</td> </tr>
+    <tr> <td>event_attribute_field_n</td> <td>Depends on type</td> <td>Event attribute parameter.</td> </tr>
+    <tr> <td>object</td> <td>JSON object</td> <td>Object attributes currently supported.</td> </tr>
+    <tr> <td>attribute_name_n</td> <td>Depends on type</td> <td>Object attribute parameter.</td> </tr>
+</table>
+
+
+## Face attribute change EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "face_attribute_change",
+        "attribute": "*" or [attribute-list]
+    }
+    
+where attributes are:
+
+ - "age"
+ - "age_confidence"
+ - "distance"
+ - "emotion"
+ - "emotion_confidence"
+ - "gender"
+ - 'gender_confidence"
+ - "look"
+ - "race"
+ - "race_confidence"
+
+Description of attributes see below.
+    
+#### Examples
+
+Filter to any face attribute change
+
+    {
+        "event_type": "face_attribute_change",
+        "attribute": "*"
+    }
+    
+or filter to face gender or age attribute change
+
+    {
+        "event_type": "face_attribute_change",
+        "attribute": ["gender", "age"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "face_attribute_change",
+        "timestamp": timestamp,
+        "object_id": id,
+        "attribute": "attribute_name",
+        "value": "attribute_value",
+        "object": { 
+            "attribute_name_exclude_attribute_change_1": "attribute_value",
+            ...
+            "attribute_name_exclude_attribute_change_n": "attribute_value"
+        }
+    }
+    
+Object attributes are:
+
+<table>
+    <th bgcolor="#999999">Attribute name</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>age</td> <td>Real</td> <td>Person age.</td> </tr>
+    <tr> <td>age_confidence</td> <td>Real</td> <td>Confidence of age value in interval [0, 1].</td> </tr>
+    
+    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and face in meters.</td> </tr>
+    
+    <tr> <td>emotion</td> <td>String</td> <td>Person emotion.</td> </tr>
+    <tr> <td>emotion_confidence</td> <td>Real</td> <td>Confidence of emotion value in interval [0, 1].</td> </tr>
+    
+    <tr> <td>gender</td> <td>Integer</td> <td>Person gender: <br /> -1 for males,<br /> 1 for females,<br /> 0 for children under 10 years old.</td> </tr>
+    <tr> <td>gender_confidence</td> <td>Real</td> <td>Confidence of gender value in interval [0, 1].</td> </tr>
+    
+    <tr> <td>look</td> <td>Boolean</td> <td>Is person look in camera.</td> </tr>
+    
+    <tr> <td>race</td> <td>String</td> <td>Person race.</td> </tr>
+    <tr> <td>race_confidence</td> <td>Real</td> <td>Confidence of race value in interval [0, 1].</td> </tr>
+    
+    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a face center in pixels.</td> </tr>
+    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a face center in pixels.</td> </tr>
+</table>    
+
+#### Example
+
+    {
+        "event_type": "face_attribute_change",
+        "timestamp": 1362133259629,
+        "object_id": 11,
+        "attribute": "gender",
+        "value": "female",
+        "object": { 
+            "age": 32,
+            "age_confidence": 0.87,
+            "distance": 1.1,
+            "emotion": "smile",
+            "emotion_confidence": "smile",
+            "gender": 1,
+            "gender_confidence": 0.78,
+            "look": false,
+            "race": "europe",
+            "race_confidence": 0.76,
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## Body attribute change EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "body_attribute_change",
+        "attribute": "*" or [attribute-list]
+    }
+
+where attributes are:
+
+ - "distance"
+
+Description of attributes see below.
+    
+#### Examples
+
+Filter to any body attribute change
+
+    {
+        "event_type": "body_attribute_change",
+        "attribute": "*"
+    }
+    
+or filter to body distance attribute change
+
+    {
+        "event_type": "body_attribute_change",
+        "attribute": ["distance"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "face_attribute_change",
+        "timestamp": timestamp,
+        "object_id": id,
+        "attribute": "attribute_name",
+        "value": "attribute_value",
+        "object": { 
+            "attribute_name_exclude_attribute_change_1": "attribute_value",
+            ...
+            "attribute_name_exclude_attribute_change_n": "attribute_value"
+        }
+    }
+    
+Object attributes are:
+
+<table>
+    <th bgcolor="#999999">Attribute name</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and body in meters.</td> </tr>
+    
+    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a body in pixels.</td> </tr>
+    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a body in pixels.</td> </tr>
+</table>    
+
+#### Example
+
+    {
+        "event_type": "face_attribute_change",
+        "timestamp": 1362133259629,
+        "object_id": 22,
+        "attribute": "distance",
+        "value": 1.3,
+        "object": { 
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## Statistic parameter change EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "statistic_parameter_change",
+        "parameter": "*" or [parameter-list]
+    }
+    
+where parameters are:
+
+ - "primary_gender"
+ - "majority_gender"
+ - "main_person"
+
+Description of parameters see below.
+    
+#### Examples
+
+Filter to any statistic parameters change
+
+    {
+        "event_type": "statistic_parameter_change",
+        "parameter": "*"
+    }
+    
+or filter to primary_gender and main_person parameters change
+
+    {
+        "event_type": "statistic_parameter_change",
+        "parameter": ["primary_gender", "main_person"]
+    }
+
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "statistic_parameter_change",
+        "timestamp": timestamp,
+        "parameter": "parameter_name",
+        "value": "parameter_value",
+    }
+    
+Parameters are:
+
+<table>
+    <th bgcolor="#999999">Attribute name</th>
+    <th bgcolor="#999999">Type</th>
+    <th bgcolor="#999999">Description</th>
+    
+    <tr> <td>primary_gender</td> 
+         <td>Integer</td> 
+         <td>Gender of the Face object longest in view (for all view periods) during the current session. 
+             If there are two or more objects with equal duration, the one that was detected first is returned.<br />
+             Value: -1 for male, 1 for female, null if no Face objects have been seen yet.
+         </td> 
+    </tr>
+    <tr> <td>majority_gender</td> 
+         <td>Integer</td> 
+         <td>Represents the current most prominent gender. The algorithm is as follows.<br />
+             &emsp;Children younger than 10 years (for whom gender is not determined) are not counted.<br />
+             &emsp;If there are no persons, return null.<br />
+             &emsp;Else, if number of persons of one gender in the current frame is greater, return that gender.<br />
+             &emsp;Else compare sums of confidences for both genders in the current frame. If one sum is greater, return corre­sponding gender.<br />
+             &emsp;Else compare sums of durations of last view periods for both genders. If one sum is greater, return corre­sponding gender.<br />
+             &emsp;Else compare durations of last view periods for one male and one female with maximal values. If one is greater, return corresponding gender.<br />
+             &emsp;Else return male gender.<br />
+             &emsp;Value: -1 for male, 1 for female, null if there are no active male or female Face objects.</td> 
+    </tr>
+    <tr> <td>main_person</td> 
+         <td>Integer</td> 
+         <td> ID of face that:<br />
+              &emsp;1) has maximal  face_time parameter.<br />
+              &emsp;2) has the minimal distance parameter. (for faces that satisfied the previous condition)<br />
+              &emsp;3) has dwell_time face_time parameter. (for faces that satisfied the previous conditions)<br />
+        </td> 
+    </tr>
+</table>    
+
+#### Example
+
+    {
+        "event_type": "statistic_parameter_change",
+        "timestamp": 1362133259629,
+        "parameter": "primary_gender",
+        "value": -1
+    }
+
+
+## Face scene interaction EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "face_scene_move",
+        "interaction_direction": "*" or [interaction_direction-list]
+    }
+    
+where interaction_directions are:
+
+ - "in"
+ - "out"
+    
+#### Examples
+
+Filter to any face scene interaction change
+
+    {
+        "event_type": "face_scene_move",
+        "interaction_direction": "*"
+    }
+    
+or filter to face scene in direction change
+
+    {
+        "event_type": "face_scene_move",
+        "interaction_direction": ["in"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "face_scene_move",
+        "timestamp": "timestamp",
+        "object_id": "object_id",
+        "interaction_direction": "interaction_direction"
+        "object": { 
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+    
+Object attributes are was described above.
+
+#### Example
+
+    {
+        "event_type": "face_scene_move",
+        "timestamp": 1362133259629,
+        "object_id": 11,
+        "interaction_direction": "in",
+        "object": { 
+            "age": 32,
+            "age_confidence": 0.87,
+            "distance": 1.1,
+            "emotion": "smile",
+            "emotion_confidence": "smile",
+            "gender": 1,
+            "gender_confidence": 0.78,
+            "look": false,
+            "race": "europe",
+            "race_confidence": 0.76,
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## Body scene interaction EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "body_scene_move",
+        "interaction_direction": "*" or [interaction_direction-list]
+    }
+    
+where directions are:
+
+ - "in"
+ - "out"
+    
+#### Examples
+
+Filter to any body scene interaction change
+
+    {
+        "event_type": "body_scene_move",
+        "interaction_direction": "*"
+    }
+    
+or filter to body scene in direction change
+
+    {
+        "event_type": "body_scene_move",
+        "interaction_direction": ["in"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "body_scene_move",
+        "timestamp": timestamp,
+        "object_id": id,
+        "interaction_direction": "interaction_direction"
+        "object": { 
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+    
+Object attributes are was described above.
+
+#### Example
+
+    {
+        "event_type": "body_scene_move",
+        "timestamp": 1362133259629,
+        "object_id": 11,
+        "interaction_direction": "in",
+        "object": { 
+            "distance": 1.1,
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## Body area interaction EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "body_area_move",
+        "target_id": "*" or [target_id-list],
+        "interaction_direction": "*" or [interaction_direction-list]
+    }
+    
+where *target_id* is area ID and directions are:
+
+ - "in"
+ - "out"
+    
+#### Examples
+
+Filter to any body area interaction change
+
+    {
+        "event_type": "body_area_move",
+        "target_id": "*",
+        "interaction_direction": "*"
+    }
+    
+or filter to body area in direction change
+
+    {
+        "event_type": "body_area_move",
+        "target_id": "*",
+        "interaction_direction": ["in"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "body_area_move",
+        "timestamp": timestamp,
+        "target_id": id,
+        "object_id": id,
+        "interaction_direction": "interaction_direction"
+        "object": { 
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+    
+Object attributes are was described above.
+
+#### Example
+
+    {
+        "event_type": "body_area_move",
+        "timestamp": 1362133259629,
+        "target_id": 5,
+        "object_id": 11,
+        "interaction_direction": "in",
+        "object": { 
+            "distance": 1.1,
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## Body line interaction EventFilter
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "body_line_cross",
+        "target_id": "*" or [target_id-list],
+        "interaction_direction": "*" or [interaction_direction-list]
+    }
+    
+where *target_id* is line ID and directions are:
+
+ - "ltr" - left to right
+ - "rtl" - right to left
+    
+#### Examples
+
+Filter to any body line interaction change
+
+    {
+        "event_type": "body_line_cross",
+        "target_id": "*",
+        "interaction_direction": "*"
+    }
+    
+or filter to body line left to right direction change
+
+    {
+        "event_type": "body_line_cross",
+        "target_id": "*",
+        "interaction_direction": ["ltr"]
+    }
+    
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "body_line_cross",
+        "timestamp": timestamp,
+        "target_id": id,
+        "object_id": id,
+        "interaction_direction": "interaction_direction"
+        "object": { 
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+    
+Object attributes are was described above.
+
+#### Example
+
+    {
+        "event_type": "body_line_cross",
+        "timestamp": 1362133259629,
+        "target_id": 5,
+        "object_id": 11,
+        "interaction_direction": "ltr",
+        "object": { 
+            "distance": 1.1,
+            "screen_position_x": 320,
+            "screen_position_y": 467,
+        }
+    }
+
+
+## article interaction
+
+### Request
+
+Common filter JSON object structure is:
+
+    {
+        "event_type": "article_interaction",
+        "target_id": [target_id-list],
+        "interaction_type": "*" or [interaction_type-list],
+        "interaction_direction": "*" or [interaction_direction-list]
+    }
+    
+where interaction_types are:
+
+ - "look" - look at article
+ - "examine" - examine article
+ - "pick" - article in basket
+ 
+interaction_direction are:
+
+ - "begin"
+ - "end"
+    
+#### Examples
+
+Filter to person article any type interaction and direction change
+
+    {
+        "event_type": "article_interaction",
+        "target_id": [1,12],
+        "interaction_type": "*",
+        "interaction_direction": "*"
+    }
+    
+or filter to any person article look and pick interaction and any direction change
+
+    {
+        "event_type": "article_interaction",
+        "target_id": "*",
+        "interaction_type": ["look", "pick"],
+        "interaction_direction": "*"
+    }
+
+### Response
+
+Common structure of notification JSON object is:
+
+    {
+        "event_type": "article_interaction",
+        "timestamp": timestamp,
+        "target_id": id,
+        "person_id": id,
+        "interaction_direction": "interaction_direction"
+        "object": { 
+            "attribute_name_1": "attribute_value",
+            ...
+            "attribute_name_n": "attribute_value"
+        }
+    }
+    
+Object attributes are was described above.
+
+#### Example
+
+    {
+        "event_type": "article_interaction",
+        "timestamp": 1362133259629,
+        "target_id": 5,
+        "person_id": 11,
+        "interaction_type": "look",
+        "interaction_direction": "begin",
+        "object": {
+            "age": 32,
+            "age_confidence": 0.87,
+            "body_distance": 1.1,
+            "body_screen_position_x": 320,
+            "body_screen_position_y": 467,
+            "emotion": "smile",
+            "emotion_confidence": "smile",
+            "face_distance": 1.1,
+            "face_screen_position_x": 320,
+            "face_screen_position_y": 467,
+            "gender": 1,
+            "gender_confidence": 0.78,
+            "look": false,
+            "race": "europe",
+            "race_confidence": 0.76
+        }
+    }
+
+
+## Subscriber collection [/notification_service/subscribers]
+
+This resource represents the collection of all border event subscribers, along with their subscriptions.
+
+### Get subscribers and their subscriptions [GET]
+
++ Response 200 (application/json)
+    
+    + Body
+    
+            [
+                {
+                    "id": 0,
+                    "url": "http://<subscriber_path>",
+                    "method": "GET",
+                    "wildcard": false,
+                    "event_filters": [
+                                            {
+                                                "event_type": "attribute_change",
+                                                "object_type": ["Face"],
+                                                "attribute": ["gender", "age", "look"]
+                                            }
+                                     ]
+                }
+            ]
+
+
+
+### Update collection of subscribers with their subscriptions [PUT]
+
+Subscribers with "id" attribute just updating existing subscriber with such "id" as if individual PUT was called 
+for each of them. All other existing subscribers are deleted as if individual DELETE was called for each of them. 
+New subscribers are added as if POST was called for each of them.
+
+If application is not in idle mode, the response status is 409 Conflict.
+
+If request contains equal subscribers, the response status is 400 Bad Request.
+
+If finished collection can have equal subscribers, then response status is 409 Conflict.
+
+If wildcard field in any subscriber event filter is being updated, the response status is 409 Conflict.
+
+If any event filter has invalid "event_type", response status is 400 Bad Request.
+
+If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
+the response status is 400 Bad Request.
+
++ Request (application/json)
+    
+    + Body
+
+            [
+                {
+                    "url": "http://<subscriber_path>",
+                    "method": "GET",
+                    "wildcard": false,
+                    "event_filters": [
+                                            {
+                                                "event_type": "face_attribute_change",
+                                                "attribute": ["gender", "age", "look"]
+                                            },
+                                            {
+                                                "event_type": "statistic_parameter_change",
+                                                "attribute": ["main_person"]
+                                            }
+                                      ]
+                },
+                {
+                    "url": "http://<subscriber_path>",
+                    "method": "PUT",
+                    "wildcard": false,
+                    "event_filters": [
+                                            {
+                                                "event_type": "statistic_parameter_change",
+                                                "attribute": ["main_person"]
+                                            }
+                                      ]
+                }
+            ]
+    
++ Response 200 (application/json)
+
+    + Body
+    
+            [
+                0,
+                1
+            ]
+
+
+### Add subscriber and, optionally, its subscriptions [POST]
+
+If application is not in idle mode, the response status is 409 Conflict.
+
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.
+
+If any event filter has invalid "event_type", response status is 400 Bad Request.
+
+If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
+the response status is 400 Bad Request.
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "url": "http://<subscriber_path>",
+                "method": "PUT",
+                "wildcard": false,
+                "event_filters": [
+                                        {
+                                            "event_type": "statistic_parameter_change",
+                                            "attribute": ["main_person"]
+                                        }
+                                  ]
+            }
+
+
++ Response 201 (application/json)
+
+    + Headers
+    
+            Location: http://look.com/notification_service/subscribers/2
+        
+    + Body
+    
+            {
+                "path": "/notification_service/subscribers/2"
+            }
+
+
+### Delete all subscribers with their subscriptions [DELETE]
+
+If application is not in idle mode, the response status is 409 Conflict.
+
++ Response 200
+
+
+
+## Subscriber [/notification_service/subscribers/{subscriber_id}]
+
+This resource represents subscriber with identifier id and, optionally, its subscriptions.
+
++ Parameters
+
+    + subscriber_id (required, number, `1`)
+        
+        Subscriber ID
+
+
+### Get subscriber and its subscriptions [GET]
+
+If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+
++ Response 200 (application/json)
+    
+    + Body
+        
+            {
+                "url": "http://<subscriber_path>",
+                "method": "PUT",
+                "wildcard": false,
+                "event_filters": [
+                                        {
+                                            "event_type": "statistic_parameter_change",
+                                            "attribute": ["main_person"]
+                                        }
+                                  ]
+            }
+
+
+### Update subscriber and/or its subscriptions [PUT]
+
+If application is not in idle mode, the response status is 409 Conflict.
+
+If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+
+If wildcard field is being updated, the response status is 409 Conflict.
+
+If given subscriber is equal to an already existing, the response status is 303 See Other, 
+and Location header field contains URL of existing subscriber.
+
+If any event filter has invalid "event_type", response status is 400 Bad Request.
+
+If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
+the response status is 400 Bad Request.
+
++ Request (application/json)
+
+    + Body
+    
+            {
+                "url": "http://<subscriber_path>",
+                "method": "PUT",
+                "wildcard": false,
+                "event_filters": [
+                                        {
+                                            "event_type": "statistic_parameter_change",
+                                            "attribute": ["main_person"]
+                                        }
+                                  ]
+            }
+
++ Response 200
+
+
+### Delete subscriber with its subscriptions [DELETE]
+
+If application is not in idle mode, the response status is 409 Conflict.
+
+If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+
++ Response 200
+
+
+
+## Subscriber EventFilters collection [/notification_service/subscribers/{subscriber_id}/event_filters]
+
+This resource represents collection of subscriptions (explicit or implicit) of subscriber with EventFilter.
+
+### Get subscriber subscriptions [GET]
+
+If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+
++ Response 200 (application/json)
+
+    + Body
+    
+            [
+                {
+                    "event_type": "face_attribute_change",
+                    "attribute": ["gender", "age", "look"]
+                },
+                {
+                    "event_type": "statistic_parameter_change",
+                    "attribute": ["main_person"]
+                }
+            ]
+
+### Update subscriptions of explicit subscriber [PUT]
+
+If application is not in idle mode, the response status is 409 Conflict.
+
+If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+
+If subscriber "wildcard" attribute is "True", the response status is 409 Conflict.
+
+If any event filter has invalid "event_type", response status is 400 Bad Request.
+
+If neccessary event filter attribute has wrong value or absent, the response status is 400 Bad Request.
+
++ Request (application/json)
+
+    + Body
+    
+            [
+                {
+                    "event_type": "face_attribute_change",
+                    "attribute": ["gender", "age", "look"]
+                },
+                {
+                    "event_type": "statistic_parameter_change",
+                    "attribute": ["main_person"]
+                }
+            ]
+            
++ Response 200
