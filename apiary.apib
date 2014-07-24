@@ -2772,25 +2772,25 @@ Objects and their attributes are:
     
             {
                 "face": {
-                    "age":  {
-                                "child": [0, 18],
-                                "young adult": [18, 25],
-                                "adult": [25, 35],
-                                "middle aged": [35, 45],
-                                "senior": [45, 110]
-                            },
+                    "age": {
+                        "child": [0, 18],
+                        "young adult": [18, 25],
+                        "adult": [25, 35],
+                        "middle aged": [35, 45],
+                        "senior": [45, 110]
+                    },
                     "distance": {
-                                    "close": [0, 1.5],
-                                    "middle": [1.5, 3],
-                                    "far": [3, 200]
-                                }
+                        "close": [0, 1.5],
+                        "middle": [1.5, 3],
+                        "far": [3, 200]
+                    }
                 },
                 "body": {
                     "distance": {
-                                    "close": [0, 1.5],
-                                    "middle": [1.5, 3],
-                                    "far": [3, 200]
-                                }
+                        "close": [0, 1.5],
+                        "middle": [1.5, 3],
+                        "far": [3, 200]
+                    }
                 }
             }
 
@@ -2810,25 +2810,25 @@ If range has no equal crossing by subranges, then response is  400 Bad Request.
     
             {
                 "face": {
-                    "age":  {
-                                "child": [0, 18],
-                                "young adult": [18, 25],
-                                "adult": [25, 35],
-                                "middle aged": [35, 45],
-                                "senior": [45, 110]
-                            },
+                    "age": {
+                        "child": [0, 18],
+                        "young adult": [18, 25],
+                        "adult": [25, 35],
+                        "middle aged": [35, 45],
+                        "senior": [45, 110]
+                    },
                     "distance": {
-                                    "close": [0, 1.5],
-                                    "middle": [1.5, 3],
-                                    "far": [3, 200]
-                                }
+                        "close": [0, 1.5],
+                        "middle": [1.5, 3],
+                        "far": [3, 200]
+                    }
                 },
                 "body": {
                     "distance": {
-                                    "close": [0, 1.5],
-                                    "middle": [1.5, 3],
-                                    "far": [3, 200]
-                                }
+                        "close": [0, 1.5],
+                        "middle": [1.5, 3],
+                        "far": [3, 200]
+                    }
                 }
             }
 
@@ -2859,19 +2859,21 @@ If range has no equal crossing by subranges, then response is  400 Bad Request.
         
     + Body
     
-            "face": {
-                "age":  {
-                            "child": [0, 18],
-                            "young adult": [18, 25],
-                            "adult": [25, 35],
-                            "middle aged": [35, 45],
-                            "senior": [45, 110]
-                        },
-                "distance": {
-                                "close": [0, 1.5],
-                                "middle": [1.5, 3],
-                                "far": [3, 200]
-                            }
+            {
+                "face": {
+                    "age": {
+                        "child": [0, 18],
+                        "young adult": [18, 25],
+                        "adult": [25, 35],
+                        "middle aged": [35, 45],
+                        "senior": [45, 110]
+                    },
+                    "distance": {
+                        "close": [0, 1.5],
+                        "middle": [1.5, 3],
+                        "far": [3, 200]
+                    }
+                }
             }
 
 ### Replace all object continuous attributes subranges [PUT]
@@ -2888,16 +2890,18 @@ If range have no equal crossing by subranges, then response is  400 Bad Request.
         
     + Body
     
-            "face": {
-                "age":  {
-                            "child": [0, 18],
-                            "adult": [18, 45],
-                            "senior": [45, 110]
-                        },
-                "distance": {
-                                "close": [0, 3],
-                                "far": [3, 200]
-                            }
+            {
+                "face": {
+                    "age": {
+                        "child": [0, 18],
+                        "adult": [18, 45],
+                        "senior": [45, 110]
+                    },
+                    "distance": {
+                        "close": [0, 3],
+                        "far": [3, 200]
+                    }
+                }
             }
 
 + Response 200
@@ -2937,13 +2941,15 @@ If range have no equal crossing by subranges, then response is  400 Bad Request.
         
     + Body
     
-            "age":  {
-                        "child": [0, 18],
-                        "young adult": [18, 25],
-                        "adult": [25, 35],
-                        "middle aged": [35, 45],
-                        "senior": [45, 110]
-                    }
+            {
+                "age":  {
+                    "child": [0, 18],
+                    "young adult": [18, 25],
+                    "adult": [25, 35],
+                    "middle aged": [35, 45],
+                    "senior": [45, 110]
+               }
+            }
  
 ### Replace all object continuous attributes ranges [PUT]
 
@@ -2959,10 +2965,12 @@ If range have no equal crossing by subranges, then response is  400 Bad Request.
         
     + Body
     
-            "age":  {
-                        "child": [0, 18],
-                        "adult": [18, 45],
-                        "senior": [45, 110]
-                    }
+            {
+                "age": {
+                    "child": [0, 18],
+                    "adult": [18, 45],
+                    "senior": [45, 110]
+                }
+            }
 
 + Response 200
