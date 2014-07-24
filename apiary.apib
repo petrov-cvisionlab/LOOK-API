@@ -2730,3 +2730,239 @@ If neccessary event filter attribute has wrong value or absent, the response sta
             ]
             
 + Response 200
+
+
+
+
+
+
+
+
+
+
+# Group Continuous Attributes
+
+Continuous object attribute. Its value range is divided into subranges.
+
+Every subrange does not include high threshold. 
+For example if subrange is [0, 18], then this range is 0 &le; range &lt; 18.
+
+Objects and their attributes are:
+
+<table>
+    <th bgcolor="#999999">Object name</th>
+    <th bgcolor="#999999">Attributes</th>
+    
+    <tr> <td>face</td> <td>age<br />distance</td> </tr>
+    <tr> <td>body</td> <td>distance</td> </tr>
+</table>
+
+
+## Continuous attributes of all objects [/continuous_attributes]
+
+### Read all object continuous attributes subranges [GET]
+
++ Response 200
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            {
+                "face": {
+                    "age":  {
+                                "child": [0, 18],
+                                "young adult": [18, 25],
+                                "adult": [25, 35],
+                                "middle aged": [35, 45],
+                                "senior": [45, 110]
+                            },
+                    "distance": {
+                                    "close": [0, 1.5],
+                                    "middle": [1.5, 3],
+                                    "far": [3, 200]
+                                }
+                },
+                "body": {
+                    "distance": {
+                                    "close": [0, 1.5],
+                                    "middle": [1.5, 3],
+                                    "far": [3, 200]
+                                }
+                }
+            }
+
+### Replace all object continuous attributes subranges [PUT]
+
+If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
+
+If range has no equal crossing by subranges, then response is  400 Bad Request.
+
++ Request
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            {
+                "face": {
+                    "age":  {
+                                "child": [0, 18],
+                                "young adult": [18, 25],
+                                "adult": [25, 35],
+                                "middle aged": [35, 45],
+                                "senior": [45, 110]
+                            },
+                    "distance": {
+                                    "close": [0, 1.5],
+                                    "middle": [1.5, 3],
+                                    "far": [3, 200]
+                                }
+                },
+                "body": {
+                    "distance": {
+                                    "close": [0, 1.5],
+                                    "middle": [1.5, 3],
+                                    "far": [3, 200]
+                                }
+                }
+            }
+
++ Response 200
+
+
+## Continuous attributes of object [/continuous_attributes/{object_name}]
+
++ Parameters
+
+    + object_name (required, string, `face`)
+    
+        Name of object, which has continuous attributes
+        
+        + Values
+        
+            + `face`
+            
+            + `body`
+            
+### Read object continuous attributes subranges [GET]
+
++ Response 200
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            "face": {
+                "age":  {
+                            "child": [0, 18],
+                            "young adult": [18, 25],
+                            "adult": [25, 35],
+                            "middle aged": [35, 45],
+                            "senior": [45, 110]
+                        },
+                "distance": {
+                                "close": [0, 1.5],
+                                "middle": [1.5, 3],
+                                "far": [3, 200]
+                            }
+            }
+
+### Replace all object continuous attributes subranges [PUT]
+
+If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
+
+If range have no equal crossing by subranges, then response is  400 Bad Request.
+
++ Request
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            "face": {
+                "age":  {
+                            "child": [0, 18],
+                            "adult": [18, 45],
+                            "senior": [45, 110]
+                        },
+                "distance": {
+                                "close": [0, 3],
+                                "far": [3, 200]
+                            }
+            }
+
++ Response 200
+
+
+## Continuous attribute of object [/continuous_attributes/{object_name}/{attribute_name}]
+
++ Parameters
+
+    + object_name (required, string, `face`)
+    
+        Name of object, which has continuous attributes
+        
+        + Values
+        
+            + `face`
+            
+            + `body`
+            
+    + attribute_name (required, string, `age`)
+    
+        Name of continuous attribute
+        
+        + Values
+        
+            + `age`
+            
+            + `distance`
+            
+### Read object continuous attribute subranges [GET]
+
++ Response 200
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            "age":  {
+                        "child": [0, 18],
+                        "young adult": [18, 25],
+                        "adult": [25, 35],
+                        "middle aged": [35, 45],
+                        "senior": [45, 110]
+                    }
+ 
+### Replace all object continuous attributes ranges [PUT]
+
+If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
+
+If range have no equal crossing by subranges, then response is  400 Bad Request.
+
++ Request
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            "age":  {
+                        "child": [0, 18],
+                        "adult": [18, 45],
+                        "senior": [45, 110]
+                    }
+
++ Response 200
