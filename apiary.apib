@@ -1673,19 +1673,21 @@ has URL
 
 
 
-# Group Notifications
+# Group Event notification
 
-This resource allow get notifications by subscriber for subscription events using HTTP.
+Client can define subscribers to various events, which receive notifications (HTTP requests) when events occur.
 
-Common structure of JSON object is:
+Subscriber is defined by URL and HTTP method.
 
-    Subscriber {
-        "id" : id,
-        "url" : "url",
-        "method" : "method",
-        "wildcard" : wildcard,
-        "event_filters" : [EventFilter-list]
-    }
+    Subscriber:
+        {
+            "id" : id,
+            
+            "url" : "url",
+            "method" : "method",
+            
+            "event_filters" : [EventFilter-list]
+        }
 
 where
 
@@ -1694,30 +1696,79 @@ where
     <th bgcolor="#999999">Type</th>
     <th bgcolor="#999999">Description</th>
     
-    <tr> <td>id</td> <td>Integer</td> <td>Subscriber ID. This field is read-only.</td> </tr>
-    <tr> <td>url</td> <td>String</td> <td>URL which receives HTTP request on event.</td> </tr>
-    <tr> <td>method</td> <td>String</td> <td>HTTP method used in request to subscriber on event.</td> </tr>
-    <tr> 
-        <td>wildcard</td> 
-        <td>Boolean</td> 
-        <td>
-            If this is a wildcard subscriber. This subscriber get notifications from any event. <br />
-            This attribute cannot be changed after subscriber is created.
-            </td> 
-        </tr>
+    <tr> <td>id</td>            <td>Integer</td> <td>Subscriber ID.<br> This field is read-only.</td> </tr>
+    <tr> <td>url</td>           <td>String</td>  <td>URL which receives HTTP request on event.</td> </tr>
+    <tr> <td>method</td>        <td>String</td>  <td>HTTP method used in request to subscriber on event.</td> </tr>
+    <tr> <td>event_filters</td> <td>Array</td>   <td>Filters defining which events this subscriber receives.<br>
+                                                     This field is also available via separate resource.</td> </tr>
 </table>
 
-Common structure of EventFilter JSON object is: 
 
-    EventFilter {
-        "event_type" : "event_type",
-        "filter_attribute_field_1" : value,
+Conceptual structure of events
+
+Note that this project is aimed to define universal event mechanism for LOOK and MOVE, and also contains speculations about possible future events.
+
+All events fall into three **types**:
+
+1. object attribute changed - age, gender, distance etc;
+2. statistic parameter changed - primary gender, main person etc;
+3. object interacted with some target - object moved into/out of scene or area, crossed line, person took an article into basket etc.
+
+Applications can work with different types of objects. Particularly, LOOK handles faces and bodies
+separately. Object types differ in possible attributes, interactions etc. So each event conceptually has
+field `object_type`.
+
+
+
+Object types
+
+1. Object attribute changed
+
+Conceptually the structure of this event is
+
+    {
+        event_type: attribute_change
+        object_type:
+        object_id:
         
-        ...
-        "filter_attribute_field_n" : value,
+        attribute:
+        value:
+        range:   # For continuous attributes (see below)
     }
+
+
+2. Statistic parameter changed
+
+{
+    event_type: statistic_parameter_change
     
-where
+    parameter: main_person
+    value: 23   // ID
+    [previous_value: 15]
+}
+
+
+/////////////////////// In progress ///////////////////////////
+
+
+
+
+
+
+Structure of EventFilter is the following: 
+
+    EventFilter:
+        {
+            "event_class" : "event_class",
+            # Other fields dependent on class
+        }
+    
+Possible event classes:
+
+- `face_attribute_change`
+- `body_attribute_change`
+- `statistic_parameter_change`
+
 
 <table>
     <th bgcolor="#999999">Field</th>
