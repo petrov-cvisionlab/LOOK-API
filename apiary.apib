@@ -1701,8 +1701,6 @@ has URL
 
 # Group Event notification
 
-
-
 Client can define subscribers to various events, which receive notifications (HTTP requests) when events occur.
 
 Subscriber is defined by URL and HTTP method.
@@ -1731,8 +1729,15 @@ where
          <td>HTTP method used in request to subscriber on event.</td> </tr>
     <tr> <td>event_filters</td> <td>Array</td>
          <td>Filters defining which events this subscriber receives.<br/>
+             Conceptually this field specifies <b>subscription</b> of the subscriber.<br/>
              This field is also available via separate resource.</td> </tr>
 </table>
+
+Conceptually subscriber's subscription is information separate from subscriber itself, and has
+its own resource. The `event_filters` field is merely a shortcut allowing to set subscriber and
+its subscriptions in one request. As a consequence, `event_filters` field
+- can be omitted when adding new subscriber;
+- is not considered when comparing subscribers for equality.
 
 
 ## Conceptual structure of events
@@ -1743,7 +1748,8 @@ All events fall into three **types**:
 
 1. object attribute changed - age, gender, distance etc;
 2. statistic parameter changed - primary gender, main person etc;
-3. object interacted with target - object moved into/out of scene or area, crossed line, person took an article into basket etc.
+3. object interacted with target - object moved into/out of scene or area, crossed line,
+                                   person took an article into basket etc.
 
 Applications can work with different types of objects. Particularly, LOOK handles faces and bodies
 separately. Object types differ in possible attributes and interactions. So events of types
@@ -2500,11 +2506,24 @@ Object attributes are was described above.
 
 
 
-## Subscriber collection [/notification_service/subscribers]
+## Event subscribers collection [/notification_service/subscribers]
 
-This resource represents the collection of all border event subscribers, along with their subscriptions.
+This resource represents the collection of all event subscribers, along with their subscriptions.
+
 
 ### Get subscribers and their subscriptions [GET]
+
+#### Request body
+
+No.
+
+
+#### Response
+
+##### Body
+
+    [ <Subscriber>-list ]
+
 
 + Response 200 (application/json)
     
@@ -2515,14 +2534,12 @@ This resource represents the collection of all border event subscribers, along w
                     "id": 0,
                     "url": "http://<subscriber_path>",
                     "method": "GET",
-                    "wildcard": false,
                     "event_filters": [
-                                            {
-                                                "event_type": "attribute_change",
-                                                "object_type": ["Face"],
-                                                "attribute": ["gender", "age", "look"]
-                                            }
-                                     ]
+                        {
+                            "event_class": "face_attribute_change",
+                            "attribute": ["gender", "age", "look"]
+                        }
+                    ]
                 }
             ]
 
@@ -2530,22 +2547,45 @@ This resource represents the collection of all border event subscribers, along w
 
 ### Update collection of subscribers with their subscriptions [PUT]
 
-Subscribers with "id" attribute just updating existing subscriber with such "id" as if individual PUT was called 
-for each of them. All other existing subscribers are deleted as if individual DELETE was called for each of them. 
-New subscribers are added as if POST was called for each of them.
+Subscribers, having ID specified, are updated as if individual PUT was called for each of them.
+Subscribers, having no ID specified, are added as if individual POST was called for each of them.
+Existing subscribers, not specified (by ID) in request, are deleted as if individual POST was
+called for each of them.
 
-If application is not in idle mode, the response status is 409 Conflict.
+See individual PUT, POST, DELETE operations for additional notes.
 
-If request contains equal subscribers, the response status is 400 Bad Request.
 
-If finished collection can have equal subscribers, then response status is 409 Conflict.
+#### Request body
 
-If wildcard field in any subscriber event filter is being updated, the response status is 409 Conflict.
+    [ <Subscriber>-list ]
 
-If any event filter has invalid "event_type", response status is 400 Bad Request.
 
-If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
-the response status is 400 Bad Request.
+#### Response
+
+##### Body
+
+Array of IDs assigned to subscribers specified in request, in corresponding order.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+    <tr><td><p>Invalid structure of <code>Subscriber</code> object.</p></td>
+                                                        <td class="code">400 Bad Request</td></tr>
+    <tr><td>Request contains equal subscribers.</td>    <td class="code">400 Bad Request</td></tr>
+    <tr><td>After applying the request the collection would contain equal subscribers.</td>
+                                                        <td class="code">409 Conflict</td></tr>
+    <tr><td>Unknown subscriber ID.</td>                 <td class="code">409 Conflict</td></tr>
+</table>
+
+Note that subscriptions (`event_filters` field) are not considered for determining equality of
+subscribers.
+
+Also there might be errors related to event filters (see
+`/notification_service/subscribers/{id}/event_filters`).
+
 
 + Request (application/json)
     
@@ -2553,30 +2593,28 @@ the response status is 400 Bad Request.
 
             [
                 {
-                    "url": "http://<subscriber_path>",
-                    "method": "GET",
-                    "wildcard": false,
+                    "url": "http://localhost:8281/event.php",
+                    "method": "PUT",
                     "event_filters": [
-                                            {
-                                                "event_type": "face_attribute_change",
-                                                "attribute": ["gender", "age", "look"]
-                                            },
-                                            {
-                                                "event_type": "statistic_parameter_change",
-                                                "attribute": ["main_person"]
-                                            }
-                                      ]
+                        {
+                            "event_class": "face_attribute_change",
+                            "attribute": ["gender", "age", "look", "distance"]
+                        },
+                        {
+                            "event_class": "body_attribute_change",
+                            "attribute": ["distance"]
+                        }
+                    ]
                 },
                 {
-                    "url": "http://<subscriber_path>",
-                    "method": "PUT",
-                    "wildcard": false,
+                    "url": "http://192.168.1.10:8080/event.php",
+                    "method": "POST",
                     "event_filters": [
-                                            {
-                                                "event_type": "statistic_parameter_change",
-                                                "attribute": ["main_person"]
-                                            }
-                                      ]
+                        {
+                            "class": "face_statistic_parameter_change",
+                            "attribute": ["main_person"]
+                        }
+                    ]
                 }
             ]
     
@@ -2590,17 +2628,50 @@ the response status is 400 Bad Request.
             ]
 
 
-### Add subscriber and, optionally, its subscriptions [POST]
+### Add subscriber and, optionally, its subscription [POST]
 
-If application is not in idle mode, the response status is 409 Conflict.
+#### Request body
 
-If given subscriber is equal to an already existing, the response status is 303 See Other, 
-and Location header field contains URL of existing subscriber.
+    <Subscriber>
 
-If any event filter has invalid "event_type", response status is 400 Bad Request.
+Field `event_filters` may be absent.
 
-If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
-the response status is 400 Bad Request.
+#### Response
+
+On success the response status is `201 Created` and `Location` header field contains URL of created
+subscriber.
+
+##### Body
+
+    { "id": id }
+where `id` is ID assigned to created subscriber.
+
+##### Errors
+
+<table>
+    <th>Condition</th> <th>Status</th> <th>Headers</th>
+    
+    <tr>
+        <td>Service is not in idle mode.</td>
+        <td class="code">409 Conflict</td>
+    </tr>
+    <tr>
+        <td><p>Invalid structure of <code>Subscriber</code> object.</p></td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    <tr>
+        <td>Given subscriber is equal to an already existing.</td>
+        <td class="code">303 See Other</td>
+        <td><p><code>Location</code> contains URL of existing subscriber.</p></td>
+    </tr>
+</table>
+
+Note that subscriptions (`event_filters` field) are not considered for determining equality of
+subscribers.
+
+Also there might be errors related to event filters (see
+`/notification_service/subscribers/{id}/event_filters`).
+
 
 + Request (application/json)
 
@@ -2609,13 +2680,12 @@ the response status is 400 Bad Request.
             {
                 "url": "http://<subscriber_path>",
                 "method": "PUT",
-                "wildcard": false,
                 "event_filters": [
-                                        {
-                                            "event_type": "statistic_parameter_change",
-                                            "attribute": ["main_person"]
-                                        }
-                                  ]
+                    {
+                        "event_class": "face_statistic_parameter_change",
+                        "attribute": ["main_person"]
+                    }
+                ]
             }
 
 
@@ -2623,37 +2693,63 @@ the response status is 400 Bad Request.
 
     + Headers
     
-            Location: http://look.com/notification_service/subscribers/2
+            Location: http://<host>/notification_service/subscribers/2
         
     + Body
     
             {
-                "path": "/notification_service/subscribers/2"
+                "id": 2
             }
 
 
 ### Delete all subscribers with their subscriptions [DELETE]
 
-If application is not in idle mode, the response status is 409 Conflict.
+#### Request body
+
+No.
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+</table>
+
 
 + Response 200
 
 
 
-## Subscriber [/notification_service/subscribers/{subscriber_id}]
+## Event subscriber [/notification_service/subscribers/{id}]
 
-This resource represents subscriber with identifier id and, optionally, its subscriptions.
+This resource represents event subscriber with identifier `id` and, optionally, its subscription.
 
 + Parameters
 
-    + subscriber_id (required, number, `1`)
+    + id (required, number, `1`)
         
         Subscriber ID
 
 
 ### Get subscriber and its subscriptions [GET]
 
-If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+#### Request body
+
+No.
+
+#### Response
+
+##### Body
+
+    <Subscriber>
+
 
 + Response 200 (application/json)
     
@@ -2662,31 +2758,63 @@ If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
             {
                 "url": "http://<subscriber_path>",
                 "method": "PUT",
-                "wildcard": false,
                 "event_filters": [
-                                        {
-                                            "event_type": "statistic_parameter_change",
-                                            "attribute": ["main_person"]
-                                        }
-                                  ]
+                    {
+                        "event_class": "face_statistic_parameter_change",
+                        "attribute": ["main_person"]
+                    }
+                ]
             }
 
 
 ### Update subscriber and/or its subscriptions [PUT]
 
-If application is not in idle mode, the response status is 409 Conflict.
+After update the subscriber must not be equal to any other.
 
-If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
 
-If wildcard field is being updated, the response status is 409 Conflict.
+#### Request body
 
-If given subscriber is equal to an already existing, the response status is 303 See Other, 
-and Location header field contains URL of existing subscriber.
+    <Subscriber>
 
-If any event filter has invalid "event_type", response status is 400 Bad Request.
+Field `id` must be either absent or equal to parameter `id`. Any other field may be absent.
 
-If neccessary event filter attribute has wrong value or absent and "wildcard" attribute is "False", 
-the response status is 400 Bad Request.
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th> <th>Status</th> <th>Headers</th>
+    
+    <tr>
+        <td>Service is not in idle mode.</td>
+        <td class="code">409 Conflict</td>
+    </tr>
+    <tr>
+        <td><p>Field <code>id</code> is present and differs from parameter <code>id</code>.</p></td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    <tr>
+        <td><p>Invalid structure of <code>Subscriber</code> object.</p></td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    <tr>
+        <td>After update this subscriber would be equal to other.</td>
+        <td class="code">303 See Other</td>
+        <td><p><code>Location</code> contains URL of other subscriber.</p></td>
+    </tr>
+</table>
+
+Note that subscriptions (`event_filters` field) are not considered for determining equality of
+subscribers.
+
+Also there might be errors related to event filters (see
+`/notification_service/subscribers/{id}/event_filters`).
+
 
 + Request (application/json)
 
@@ -2695,13 +2823,12 @@ the response status is 400 Bad Request.
             {
                 "url": "http://<subscriber_path>",
                 "method": "PUT",
-                "wildcard": false,
                 "event_filters": [
-                                        {
-                                            "event_type": "statistic_parameter_change",
-                                            "attribute": ["main_person"]
-                                        }
-                                  ]
+                    {
+                        "event_class": "face_statistic_parameter_change",
+                        "attribute": ["main_person"]
+                    }
+                ]
             }
 
 + Response 200
@@ -2709,21 +2836,45 @@ the response status is 400 Bad Request.
 
 ### Delete subscriber with its subscriptions [DELETE]
 
-If application is not in idle mode, the response status is 409 Conflict.
+#### Request body
 
-If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+No.
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+</table>
 
 + Response 200
 
 
 
-## Subscriber EventFilters collection [/notification_service/subscribers/{subscriber_id}/event_filters]
+## Subscriber subscriptions [/notification_service/subscribers/{id}/event_filters]
 
-This resource represents collection of subscriptions (explicit or implicit) of subscriber with EventFilter.
+This resource represents collection of subscriptions of subscriber with identifier `id`.
+
 
 ### Get subscriber subscriptions [GET]
 
-If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
+#### Request body
+
+No.
+
+#### Response
+
+##### Body
+
+    [ <EventFilter>-list ]
+
 
 + Response 200 (application/json)
 
@@ -2731,26 +2882,27 @@ If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
     
             [
                 {
-                    "event_type": "face_attribute_change",
+                    "event_class": "face_attribute_change",
                     "attribute": ["gender", "age", "look"]
                 },
                 {
-                    "event_type": "statistic_parameter_change",
+                    "event_class": "face_statistic_parameter_change",
                     "attribute": ["main_person"]
                 }
             ]
 
-### Update subscriptions of explicit subscriber [PUT]
+
+
+### Update subscriptions of subscriber [PUT]
+
+// BEGIN TODO
 
 If application is not in idle mode, the response status is 409 Conflict.
-
-If subscriber with `subscriber_id` is absent, then response is 404 Not Found.
-
-If subscriber "wildcard" attribute is "True", the response status is 409 Conflict.
 
 If any event filter has invalid "event_type", response status is 400 Bad Request.
 
 If neccessary event filter attribute has wrong value or absent, the response status is 400 Bad Request.
+
 
 + Request (application/json)
 
