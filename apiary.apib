@@ -5,6 +5,32 @@ HOST: http://docs.look.apiary.io/
 
 # LOOK
 
+
+
+<style>
+table th { background-color: #999999; }
+
+tr.section-header { background-color: #C0C0C0; }
+
+.code { font-family: monospace; }
+
+.dev-comment {
+    #display: none;
+    margin: 1em 0;
+    border: 0.2em solid orange;
+    padding: 1em;
+    background-color: beige;
+}
+.dev-comment::before {
+    content: "Developer comment";
+    font-weight: bold;
+    color: darkorange;
+}
+.dev-comment > pre { text-shadow: none; }
+</style>
+
+
+
 The API works over the HTTP 1.1 protocol. It exposes a set of resources, which can be used to retrieve and/or modify 
 application state. States of resources are represented in JSON. Operations are specified by HTTP request methods, their 
 parameters – by URI query string. Response codes are (subset of) those defined by the HTTP standard. The API is stateless.
@@ -1675,6 +1701,8 @@ has URL
 
 # Group Event notification
 
+
+
 Client can define subscribers to various events, which receive notifications (HTTP requests) when events occur.
 
 Subscriber is defined by URL and HTTP method.
@@ -1692,19 +1720,22 @@ Subscriber is defined by URL and HTTP method.
 where
 
 <table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
+    <th>Field</th>              <th>Type</th>    <th>Description</th>
     
-    <tr> <td>id</td>            <td>Integer</td> <td>Subscriber ID.<br> This field is read-only.</td> </tr>
-    <tr> <td>url</td>           <td>String</td>  <td>URL which receives HTTP request on event.</td> </tr>
-    <tr> <td>method</td>        <td>String</td>  <td>HTTP method used in request to subscriber on event.</td> </tr>
-    <tr> <td>event_filters</td> <td>Array</td>   <td>Filters defining which events this subscriber receives.<br>
-                                                     This field is also available via separate resource.</td> </tr>
+    <tr> <td>id</td>            <td>Integer</td>
+         <td>Subscriber ID.<br/>
+             This field is read-only.</td> </tr>
+    <tr> <td>url</td>           <td>String</td>
+         <td>URL which receives HTTP request on event.</td> </tr>
+    <tr> <td>method</td>        <td>String</td>
+         <td>HTTP method used in request to subscriber on event.</td> </tr>
+    <tr> <td>event_filters</td> <td>Array</td>
+         <td>Filters defining which events this subscriber receives.<br/>
+             This field is also available via separate resource.</td> </tr>
 </table>
 
 
-Conceptual structure of events
+## Conceptual structure of events
 
 Note that this project is aimed to define universal event mechanism for LOOK and MOVE, and also contains speculations about possible future events.
 
@@ -1712,17 +1743,17 @@ All events fall into three **types**:
 
 1. object attribute changed - age, gender, distance etc;
 2. statistic parameter changed - primary gender, main person etc;
-3. object interacted with some target - object moved into/out of scene or area, crossed line, person took an article into basket etc.
+3. object interacted with target - object moved into/out of scene or area, crossed line, person took an article into basket etc.
 
 Applications can work with different types of objects. Particularly, LOOK handles faces and bodies
-separately. Object types differ in possible attributes, interactions etc. So each event conceptually has
-field `object_type`.
+separately. Object types differ in possible attributes and interactions. So events of types
+"attribute change" and "interaction" conceptually have field `object_type`.
 
 
 
-Object types
+### Object types
 
-1. Object attribute changed
+#### 1. Object attribute changed
 
 Conceptually the structure of this event is
 
@@ -1737,180 +1768,256 @@ Conceptually the structure of this event is
     }
 
 
-2. Statistic parameter changed
+#### 2. Statistic parameter changed
 
+    {
+        event_type: statistic_parameter_change
+        
+        parameter:
+        value:
+    }
+
+
+#### 3. Object interacted with target
+
+    {
+        event_type: interaction
+        object_type:
+        object_id:
+        
+        target_type:
+        target_id:
+        interaction_type:
+        interaction_direction:
+    }
+
+
+<div class="dev-comment">
+<p>Often a value of one field implies specific value of other field(s). For example, object can
+interact with an area in single way - moving in/out of it. So <code>event_type: interaction
+</code> and <code>target_type: area</code> imply <code>interaction_type: move</code>.</p>
+
+<p>Also we want to limit possibilities for client errors in requests, particularly concerning
+specification of several values in some fields. For example, faces and bodies have different
+attributes, so the filter</p>
+
+<pre>
 {
-    event_type: statistic_parameter_change
-    
-    parameter: main_person
-    value: 23   // ID
-    [previous_value: 15]
-}
+    event_type: attribute_change,
+    object_type: [ face, body ],
+    attribute: [ age, distance ]
+}</pre>
+
+<p>would be confusing because bodies do not have <code>age</code> attribute. We can eliminate the
+potential confusion by removing <code>object_type</code> and combining it with <code>event_type</code>.
+</p>
+
+<p>This reasons lead us to concept of <b>event class</b>.</p>
+</div>
 
 
-/////////////////////// In progress ///////////////////////////
+For convenience, several conceptual fields combine into one actual field `event_class`.
+
+<table>
+    <th>Event class</th>                         <th>Corresponding conceptual fields</th>
+
+    <tr class="section-header"> <td colspan="2"> LOOK </td> </tr>
+    <tr class="code"> <td>face_attribute_change</td> <td> event_type: attribute_change<br/>
+                                                          object_type: face                 </td> </tr>
+    <tr class="code"> <td>body_attribute_change</td> <td> event_type: attribute_change<br/>
+                                                          object_type: body                 </td> </tr>
+    <tr class="code"> <td>face_scene_move</td>       <td> event_type: interaction<br/>
+                                                          object_type: face<br/>
+                                                          target_type: scene<br/>
+                                                          target_id: undefined<br/>
+                                                          interaction_type: move            </td> </tr>
+    <tr class="code"> <td>body_scene_move</td>       <td> event_type: interaction<br/>
+                                                          object_type: body<br/>
+                                                          target_type: scene<br/>
+                                                          target_id: undefined<br/>
+                                                          interaction_type: move            </td> </tr>
+    <tr class="code"> <td>face_statistic_parameter_change</td>
+                                                     <td> event_type: statistic_parameter_change <br/>
+                                                          object_type: face                 </td> </tr>
+    <tr class="section-header"> <td colspan="2"> MOVE </td> </tr>
+    <tr class="code"> <td>area_move</td>             <td> event_type: interaction<br/>
+                                                          object_type: person<br/>
+                                                          target_type: area<br/>
+                                                          interaction_type: move            </td> </tr>
+    <tr class="code"> <td>line_cross</td>            <td> event_type: interaction<br/>
+                                                          object_type: person<br/>
+                                                          target_type: line<br/>
+                                                          interaction_type: cross           </td> </tr>
+    <tr class="section-header"> <td colspan="2"> Speculation: customer interacts with article </td> </tr>
+    <tr class="code"> <td>article_interaction</td>   <td> event_type: interaction<br/>
+                                                          object_type: person<br/>
+                                                          target_type: article              </td> </tr>
+</table>
 
 
 
+## Common structure of filters and notifications
 
-
-
-Structure of EventFilter is the following: 
+Common structure of EventFilter is
 
     EventFilter:
         {
-            "event_class" : "event_class",
-            # Other fields dependent on class
+            "event_class": <event_class>,
+            # Class-specific fields
         }
     
-Possible event classes:
 
-- `face_attribute_change`
-- `body_attribute_change`
-- `statistic_parameter_change`
-
-
-<table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    
-    <tr> <td>event_type</td> <td>String</td> <td>Type of event group.</td> </tr>
-    <tr> <td>filter_attribute_field_n</td> <td>Depends on type</td> <td>Filter attribute parameter. <br />
-        if field has ‘*’ value then it is mean that this field has all valid values.</td> </tr>
-</table>
-
-Common structure of notification JSON object is:
+Common structure of notification JSON object is
 
     {
-        "event_type" : "event_type",
-        "timestamp": timestamp,
-        "event_attribute_field_1": value,
-        ...
-        "event_attribute_field_n": value,
-        "object": {
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
+        "event": {
+            "timestamp": <timestamp>,
+            "event_class": <event_class>,
+            # Class-specific fields
+        },
+        "object": <object>
     }
 
 where
 
 <table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
+    <th>Field</th> <th>Type</th> <th>Description</th>
     
-    <tr> <td>event_type</td> <td>String</td> <td>Type of event group.</td> </tr>
-    <tr> <td>timestamp</td>  <td>Integer</td> <td>Number of milliseconds since 1970-01-01 00:00:00 UTC.</td> </tr>
-    <tr> <td>event_attribute_field_n</td> <td>Depends on type</td> <td>Event attribute parameter.</td> </tr>
-    <tr> <td>object</td> <td>JSON object</td> <td>Object attributes currently supported.</td> </tr>
-    <tr> <td>attribute_name_n</td> <td>Depends on type</td> <td>Object attribute parameter.</td> </tr>
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object</td>
+        <td>Object</td>
+        <td><p>State of object referred to by event (if any), corresponding to event time.</p>
+            <p>Structure is the same as for current state data request
+               (<code>/data?time=now</code>).</p>
+        </td>
+    </tr>
 </table>
 
 
-## Face attribute change EventFilter
+## Event classes
 
-### Request
+### Object attribute change
 
-Common filter JSON object structure is:
+#### Filter
 
-    {
-        "event_type": "face_attribute_change",
-        "attribute": "*" or [attribute-list]
-    }
+    EventFilter:
+        {
+            "event_class": "face_attribute_change" | "body_attribute_change",
+            "attribute": [ attribute-list ] | "*"
+        }
     
-where attributes are:
+Possible attributes are:<br/>
+for faces - `age`, `gender`, `emotion`, `race`, `look`, `distance`;<br/>
+for bodies - `distance`.<br/>
+Description of attributes see in `/data` resource section.
 
- - "age"
- - "age_confidence"
- - "distance"
- - "emotion"
- - "emotion_confidence"
- - "gender"
- - 'gender_confidence"
- - "look"
- - "race"
- - "race_confidence"
 
-Description of attributes see below.
-    
-#### Examples
+##### Examples
 
-Filter to any face attribute change
+Filter for any face attribute change:
 
     {
         "event_type": "face_attribute_change",
         "attribute": "*"
     }
     
-or filter to face gender or age attribute change
+Filter for face gender or age change:
 
     {
         "event_type": "face_attribute_change",
         "attribute": ["gender", "age"]
     }
-    
-### Response
 
-Common structure of notification JSON object is:
+
+#### Notification
 
     {
-        "event_type": "face_attribute_change",
-        "timestamp": timestamp,
-        "object_id": id,
-        "attribute": "attribute_name",
-        "value": "attribute_value",
-        "object": { 
-            "attribute_name_exclude_attribute_change_1": "attribute_value",
-            ...
-            "attribute_name_exclude_attribute_change_n": "attribute_value"
-        }
+        "event": {
+            "timestamp": <timestamp>,
+            "event_class": "face_attribute_change" | "body_attribute_change",
+            "object_id": <object_id>,
+            "attribute": <attribute>,
+            "value": <value>,
+            "range": <range>
+        },
+        object: <object>
     }
-    
-Object attributes are:
+
+where
 
 <table>
-    <th bgcolor="#999999">Attribute name</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
+    <th>Field</th>           <th>Type</th>      <th>Description</th>
     
-    <tr> <td>age</td> <td>Real</td> <td>Person age.</td> </tr>
-    <tr> <td>age_confidence</td> <td>Real</td> <td>Confidence of age value in interval [0, 1].</td> </tr>
-    
-    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and face in meters.</td> </tr>
-    
-    <tr> <td>emotion</td> <td>String</td> <td>Person emotion.</td> </tr>
-    <tr> <td>emotion_confidence</td> <td>Real</td> <td>Confidence of emotion value in interval [0, 1].</td> </tr>
-    
-    <tr> <td>gender</td> <td>Integer</td> <td>Person gender: <br /> -1 for males,<br /> 1 for females,<br /> 0 for children under 10 years old.</td> </tr>
-    <tr> <td>gender_confidence</td> <td>Real</td> <td>Confidence of gender value in interval [0, 1].</td> </tr>
-    
-    <tr> <td>look</td> <td>Boolean</td> <td>Is person look in camera.</td> </tr>
-    
-    <tr> <td>race</td> <td>String</td> <td>Person race.</td> </tr>
-    <tr> <td>race_confidence</td> <td>Real</td> <td>Confidence of race value in interval [0, 1].</td> </tr>
-    
-    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a face center in pixels.</td> </tr>
-    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a face center in pixels.</td> </tr>
-</table>    
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object_id</td>
+        <td>Integer</td>
+        <td>ID of object whose attribute has changed.</td>
+    </tr>
+    <tr>
+        <td class="code">attribute</td>
+        <td>String</td>
+        <td>Name of attribute that has changed.</td>
+    </tr>
+    <tr>
+        <td class="code">value</td>
+        <td>Depends on attribute</td>
+        <td>New attribute value.</td>
+    </tr>
+    <tr>
+        <td class="code">range</td>
+        <td>String</td>
+        <td>Name of range new value falls into.<br/>
+            Present only for continuous attributes.</td>
+    </tr>
+    <tr>
+        <td class="code">object</td>
+        <td>Object</td>
+        <td><p>State of object referred to by <code>&lt;object_id&gt;</code>, corresponding to
+               event time.</p>
+            <p>Structure is the same as for current state data request
+               (<code>/data?time=now</code>).</p>
+        </td>
+    </tr>
+</table>
 
-#### Example
+
+##### Examples
 
     {
-        "event_type": "face_attribute_change",
-        "timestamp": 1362133259629,
-        "object_id": 11,
-        "attribute": "gender",
-        "value": "female",
+        "event": {
+            "timestamp": 1362133259629,
+            "event_type": "face_attribute_change",
+            "object_id": 11,
+            "attribute": "gender",
+            "value": "female"
+        },
         "object": { 
             "age": 32,
             "age_confidence": 0.87,
             "distance": 1.1,
             "emotion": "smile",
-            "emotion_confidence": "smile",
-            "gender": 1,
+            "emotion_confidence": "0.73",
+            "gender": "female",
             "gender_confidence": 0.78,
             "look": false,
             "race": "europe",
@@ -1919,79 +2026,17 @@ Object attributes are:
             "screen_position_y": 467,
         }
     }
-
-
-## Body attribute change EventFilter
-
-### Request
-
-Common filter JSON object structure is:
+&nbsp;
 
     {
-        "event_type": "body_attribute_change",
-        "attribute": "*" or [attribute-list]
-    }
-
-where attributes are:
-
- - "distance"
-
-Description of attributes see below.
-    
-#### Examples
-
-Filter to any body attribute change
-
-    {
-        "event_type": "body_attribute_change",
-        "attribute": "*"
-    }
-    
-or filter to body distance attribute change
-
-    {
-        "event_type": "body_attribute_change",
-        "attribute": ["distance"]
-    }
-    
-### Response
-
-Common structure of notification JSON object is:
-
-    {
-        "event_type": "face_attribute_change",
-        "timestamp": timestamp,
-        "object_id": id,
-        "attribute": "attribute_name",
-        "value": "attribute_value",
-        "object": { 
-            "attribute_name_exclude_attribute_change_1": "attribute_value",
-            ...
-            "attribute_name_exclude_attribute_change_n": "attribute_value"
-        }
-    }
-    
-Object attributes are:
-
-<table>
-    <th bgcolor="#999999">Attribute name</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    
-    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and body in meters.</td> </tr>
-    
-    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a body in pixels.</td> </tr>
-    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a body in pixels.</td> </tr>
-</table>    
-
-#### Example
-
-    {
-        "event_type": "face_attribute_change",
-        "timestamp": 1362133259629,
-        "object_id": 22,
-        "attribute": "distance",
-        "value": 1.3,
+        "event": {
+            "timestamp": 1362133259629,
+            "event_type": "body_attribute_change",
+            "object_id": 22,
+            "attribute": "distance",
+            "value": 0.5
+            "range": "close"
+        },
         "object": { 
             "screen_position_x": 320,
             "screen_position_y": 467,
@@ -1999,235 +2044,224 @@ Object attributes are:
     }
 
 
-## Statistic parameter change EventFilter
 
-### Request
+### Statistic parameter change
 
-Common filter JSON object structure is:
+#### Filter
+
+    EventFilter:
+        {
+            "event_class": "face_statistic_parameter_change",
+            "parameter": [ <parameter>-list ] | "*"
+        }
+    
+where `<parameter>` is one of `primary_gender`, `majority_gender` or `main_person`. Description
+of parameters see in `/data` resource section.
+
+
+##### Examples
+
+Filter for any statistic parameters change:
 
     {
-        "event_type": "statistic_parameter_change",
-        "parameter": "*" or [parameter-list]
-    }
-    
-where parameters are:
-
- - "primary_gender"
- - "majority_gender"
- - "main_person"
-
-Description of parameters see below.
-    
-#### Examples
-
-Filter to any statistic parameters change
-
-    {
-        "event_type": "statistic_parameter_change",
+        "event_class": "face_statistic_parameter_change",
         "parameter": "*"
     }
     
-or filter to primary_gender and main_person parameters change
+Filter for `primary_gender` and `main_person` parameters change:
 
     {
-        "event_type": "statistic_parameter_change",
+        "event_type": "face_statistic_parameter_change",
         "parameter": ["primary_gender", "main_person"]
     }
 
-### Response
 
-Common structure of notification JSON object is:
+#### Notification
 
     {
-        "event_type": "statistic_parameter_change",
-        "timestamp": timestamp,
-        "parameter": "parameter_name",
-        "value": "parameter_value",
+        "event": {
+            "timestamp": <timestamp>,
+            "event_class": "face_statistic_parameter_change",
+            "parameter": <parameter>,
+            "value": <value>
+        },
+        object: <object>
     }
     
-Parameters are:
+where
 
 <table>
-    <th bgcolor="#999999">Attribute name</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
+    <th>Field</th>           <th>Type</th>      <th>Description</th>
     
-    <tr> <td>primary_gender</td> 
-         <td>Integer</td> 
-         <td>Gender of the Face object longest in view (for all view periods) during the current session. 
-             If there are two or more objects with equal duration, the one that was detected first is returned.<br />
-             Value: -1 for male, 1 for female, null if no Face objects have been seen yet.
-         </td> 
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
     </tr>
-    <tr> <td>majority_gender</td> 
-         <td>Integer</td> 
-         <td>Represents the current most prominent gender. The algorithm is as follows.<br />
-             &emsp;Children younger than 10 years (for whom gender is not determined) are not counted.<br />
-             &emsp;If there are no persons, return null.<br />
-             &emsp;Else, if number of persons of one gender in the current frame is greater, return that gender.<br />
-             &emsp;Else compare sums of confidences for both genders in the current frame. If one sum is greater, return corre­sponding gender.<br />
-             &emsp;Else compare sums of durations of last view periods for both genders. If one sum is greater, return corre­sponding gender.<br />
-             &emsp;Else compare durations of last view periods for one male and one female with maximal values. If one is greater, return corresponding gender.<br />
-             &emsp;Else return male gender.<br />
-             &emsp;Value: -1 for male, 1 for female, null if there are no active male or female Face objects.</td> 
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
     </tr>
-    <tr> <td>main_person</td> 
-         <td>Integer</td> 
-         <td> ID of face that:<br />
-              &emsp;1) has maximal  face_time parameter.<br />
-              &emsp;2) has the minimal distance parameter. (for faces that satisfied the previous condition)<br />
-              &emsp;3) has dwell_time face_time parameter. (for faces that satisfied the previous conditions)<br />
-        </td> 
+    <tr>
+        <td class="code">parameter</td>
+        <td>String</td>
+        <td>Name of parameter that has changed.</td>
     </tr>
-</table>    
+    <tr>
+        <td class="code">value</td>
+        <td>Depends on parameter</td>
+        <td>New parameter value.</td>
+    </tr>
+    <tr>
+        <td class="code">object</td>
+        <td>Object</td>
+        <td><p>If parameter is <code>main_person</code>, this is state of object with ID specified
+               by <code>&lt;value&gt;</code> (new main person), corresponding to event time.</p>
+            <p>Present only if parameter is <code>main_person</code>.</p>
+            <p>Structure is the same as for current state data request
+               (<code>/data?time=now</code>).</p>
+        </td>
+    </tr>
+</table>
 
-#### Example
+
+##### Example
 
     {
-        "event_type": "statistic_parameter_change",
-        "timestamp": 1362133259629,
-        "parameter": "primary_gender",
-        "value": -1
+        "event": {
+            "timestamp": 1362133259629,
+            "event_type": "face_statistic_parameter_change",
+            "parameter": "primary_gender",
+            "value": "male"
+        }
     }
 
 
-## Face scene interaction EventFilter
 
-### Request
+### Scene interaction (dwell events)
 
-Common filter JSON object structure is:
+#### Filter
 
-    {
-        "event_type": "face_scene_move",
-        "interaction_direction": "*" or [interaction_direction-list]
-    }
+    EventFilter:
+        {
+            "event_class": "face_scene_move" | "body_scene_move",
+            "interaction_direction": [ <interaction_direction>-list ] | "*"
+        }
     
-where interaction_directions are:
+where `<interaction_direction>` is `in` or `out`.
 
- - "in"
- - "out"
-    
-#### Examples
 
-Filter to any face scene interaction change
+##### Examples
+
+Filter for faces entering and exiting the scene:
 
     {
         "event_type": "face_scene_move",
         "interaction_direction": "*"
     }
     
-or filter to face scene in direction change
+Filter for bodies entering the scene:
 
     {
-        "event_type": "face_scene_move",
-        "interaction_direction": ["in"]
+        "event_type": "body_scene_move",
+        "interaction_direction": [ "in" ]
+    }
+
+    
+#### Notification
+
+    {
+        "event": {
+            "timestamp": <timestamp>,
+            "event_type": "face_scene_move" | "body_scene_move",
+            "object_id": <object_id>,
+            "interaction_direction": <direction>
+        },
+        "object": <object>
     }
     
-### Response
+where
 
-Common structure of notification JSON object is:
-
-    {
-        "event_type": "face_scene_move",
-        "timestamp": "timestamp",
-        "object_id": "object_id",
-        "interaction_direction": "interaction_direction"
-        "object": { 
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
-    }
+<table>
+    <th>Field</th>           <th>Type</th>      <th>Description</th>
     
-Object attributes are was described above.
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object_id</td>
+        <td>Integer</td>
+        <td>ID of object.</td>
+    </tr>
+    <tr>
+        <td class="code">direction</td>
+        <td>String</td>
+        <td><p>Possible values are <code>in</code> and <code>out</code></p></td>
+    </tr>
+    <tr>
+        <td class="code">object</td>
+        <td>Object</td>
+        <td><p>State of object referred to by <code>&lt;object_id&gt;</code>, corresponding to
+               event time.</p>
+            <p>Structure is the same as for current state data request
+               (<code>/data?time=now</code>).</p>
+        </td>
+    </tr>
+</table>
 
-#### Example
+
+##### Examples
 
     {
-        "event_type": "face_scene_move",
-        "timestamp": 1362133259629,
-        "object_id": 11,
-        "interaction_direction": "in",
+        "event": {
+            "event_type": "face_scene_move",
+            "timestamp": 1362133259629,
+            "object_id": 11,
+            "interaction_direction": "in"
+        },
         "object": { 
             "age": 32,
             "age_confidence": 0.87,
             "distance": 1.1,
             "emotion": "smile",
-            "emotion_confidence": "smile",
+            "emotion_confidence": 0.73,
             "gender": 1,
             "gender_confidence": 0.78,
-            "look": false,
+            "look": true,
             "race": "europe",
             "race_confidence": 0.76,
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
     }
-
-
-## Body scene interaction EventFilter
-
-### Request
-
-Common filter JSON object structure is:
+&nbsp;
 
     {
-        "event_type": "body_scene_move",
-        "interaction_direction": "*" or [interaction_direction-list]
-    }
-    
-where directions are:
-
- - "in"
- - "out"
-    
-#### Examples
-
-Filter to any body scene interaction change
-
-    {
-        "event_type": "body_scene_move",
-        "interaction_direction": "*"
-    }
-    
-or filter to body scene in direction change
-
-    {
-        "event_type": "body_scene_move",
-        "interaction_direction": ["in"]
-    }
-    
-### Response
-
-Common structure of notification JSON object is:
-
-    {
-        "event_type": "body_scene_move",
-        "timestamp": timestamp,
-        "object_id": id,
-        "interaction_direction": "interaction_direction"
+        "event": {
+            "event_type": "body_scene_move",
+            "timestamp": 1362133259629,
+            "object_id": 22,
+            "interaction_direction": "out"
+        },
         "object": { 
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
-    }
-    
-Object attributes are was described above.
-
-#### Example
-
-    {
-        "event_type": "body_scene_move",
-        "timestamp": 1362133259629,
-        "object_id": 11,
-        "interaction_direction": "in",
-        "object": { 
-            "distance": 1.1,
+            "distance": 3.1,
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
     }
+
+
+
+// { BEGIN   TODO (not LOOK)
+
 
 
 ## Body area interaction EventFilter
@@ -2460,6 +2494,10 @@ Object attributes are was described above.
             "race_confidence": 0.76
         }
     }
+
+
+// { END   TODO (not LOOK)
+
 
 
 ## Subscriber collection [/notification_service/subscribers]
