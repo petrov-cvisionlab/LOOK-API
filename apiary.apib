@@ -1752,8 +1752,8 @@ All events fall into three **types**:
                                    person took an article into basket etc.
 
 Applications can work with different types of objects. Particularly, LOOK handles faces and bodies
-separately. Object types differ in possible attributes and interactions. So events of types
-"attribute change" and "interaction" conceptually have field `object_type`.
+separately. Object types differ in possible attributes, statistic parameters and interactions.
+So each event conceptually has field `object_type`.
 
 
 
@@ -1778,6 +1778,7 @@ Conceptually the structure of this event is
 
     {
         event_type: statistic_parameter_change
+        object_type:
         
         parameter:
         value:
@@ -1791,7 +1792,7 @@ Conceptually the structure of this event is
         object_type:
         object_id:
         
-        target_type:
+        target_type:   # scene, area, line, article etc
         target_id:
         interaction_type:
         interaction_direction:
@@ -1818,7 +1819,7 @@ attributes, so the filter</p>
 potential confusion by removing <code>object_type</code> and combining it with <code>event_type</code>.
 </p>
 
-<p>This reasons lead us to concept of <b>event class</b>.</p>
+<p>These reasons lead us to concept of <b>event class</b>.</p>
 </div>
 
 
@@ -1919,13 +1920,14 @@ where
     EventFilter:
         {
             "event_class": "face_attribute_change" | "body_attribute_change",
-            "attribute": [ attribute-list ] | "*"
+            "attribute": [ <attribute>-list ] | "*"
         }
-    
-Possible attributes are:<br/>
+
+Possible values of `<attribute>` are:<br/>
 for faces - `age`, `gender`, `emotion`, `race`, `look`, `distance`;<br/>
 for bodies - `distance`.<br/>
 Description of attributes see in `/data` resource section.
+The `"*"` means all attributes corresponding to object type specified by event class (face or body).
 
 
 ##### Examples
@@ -2063,6 +2065,7 @@ where
     
 where `<parameter>` is one of `primary_gender`, `majority_gender` or `main_person`. Description
 of parameters see in `/data` resource section.
+The `"*"` means all attributes corresponding to object type specified by event class (face).
 
 
 ##### Examples
@@ -2156,6 +2159,7 @@ where
         }
     
 where `<interaction_direction>` is `in` or `out`.
+The `"*"` means either direction.
 
 
 ##### Examples
@@ -2554,6 +2558,8 @@ called for each of them.
 
 See individual PUT, POST, DELETE operations for additional notes.
 
+Note. One method to preserve contents of a subscriber, is to specify only its ID and no other fields.
+
 
 #### Request body
 
@@ -2634,7 +2640,10 @@ Also there might be errors related to event filters (see
 
     <Subscriber>
 
-Field `event_filters` may be absent.
+Field `id` must be absent. Field `event_filters` may be absent.
+
+If field `event_filters` is present, it is processed after subscriber is created as if
+`PUT /notification_service/subscribers/{id}/event_filters` was called.
 
 #### Response
 
@@ -2778,6 +2787,9 @@ After update the subscriber must not be equal to any other.
 
 Field `id` must be either absent or equal to parameter `id`. Any other field may be absent.
 
+If field `event_filters` is present, it is processed after subscriber is updated as if
+`PUT /notification_service/subscribers/{id}/event_filters` was called.
+
 
 #### Response
 
@@ -2854,16 +2866,18 @@ No.
     <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
 </table>
 
+
 + Response 200
 
 
 
 ## Subscriber subscriptions [/notification_service/subscribers/{id}/event_filters]
 
-This resource represents collection of subscriptions of subscriber with identifier `id`.
+This resource represents collection of subscriptions (expressed as event filters) of subscriber
+with identifier `id`.
 
 
-### Get subscriber subscriptions [GET]
+### Get subscriber's subscriptions [GET]
 
 #### Request body
 
@@ -2893,15 +2907,54 @@ No.
 
 
 
-### Update subscriptions of subscriber [PUT]
+### Update subscriber's subscriptions [PUT]
 
-// BEGIN TODO
+#### Request body
 
-If application is not in idle mode, the response status is 409 Conflict.
+    [ <EventFilter>-list ]
 
-If any event filter has invalid "event_type", response status is 400 Bad Request.
+#### Response
 
-If neccessary event filter attribute has wrong value or absent, the response status is 400 Bad Request.
+##### Body
+
+No.
+
+##### Errors
+
+General errors:
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+    <tr><td>Unknown event class.</td>                   <td class="code">400 Bad Request</td></tr>
+</table>
+
+Errors specific to event class:
+
+<table>
+    <th>Event class</th> <th>Condition</th> <th>Status</th>
+    
+    <tr>
+        <td class="code">face_attribute_change |<br/>
+                         body_attribute_change</td>
+        <td>At least one attribute is unknown for object type specified by event class.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    
+    <tr>
+        <td class="code">face_statistic_parameter_change</td>
+        <td>At least one parameter is unknown for object type specified by event class.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    
+    <tr>
+        <td class="code">face_scene_move |<br/>
+                         body_scene_move</td>
+        <td>Invalid interaction direction.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+</table>
 
 
 + Request (application/json)
@@ -2910,308 +2963,114 @@ If neccessary event filter attribute has wrong value or absent, the response sta
     
             [
                 {
-                    "event_type": "face_attribute_change",
-                    "attribute": ["gender", "age", "look"]
+                    "event_class": "face_attribute_change",
+                    "attribute": [ "gender", "age", "look" ]
                 },
                 {
-                    "event_type": "statistic_parameter_change",
-                    "attribute": ["main_person"]
+                    "event_class": "face_statistic_parameter_change",
+                    "attribute": [ "main_person" ]
                 }
             ]
             
-    + Schema
-    
-                {
-                    "$schema": "http://json-schema.org/draft-03/schema#",
-                    "description": "schema for event filters",
-                    
-                    "definitions": {
-                    
-                        "FaceAttributeChange": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "face_attribute_change" ] },
-                                "attribute": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["age", "gender", "emotion", "race", "look", "distance"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": ["*"] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "attribute" ],
-                            "additionalProperties": false
-                        },
-                        "BodyAttributeChange": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "body_attribute_change" ] },
-                                "attribute": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["distance"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": ["*"]
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "attribute" ],
-                            "additionalProperties": false
-                        },
-                        
-                        
-                        
-                        "FaceStatisticParameterChange": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "face_statistic_parameter_change" ] },
-                                "parameter": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["primary_gender", "majority_gender", "main_person"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "parameter" ],
-                            "additionalProperties": false
-                        },
-                        
-                        
-                        
-                        "FaceSceneMove": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "face_scene_move" ] },
-                                "interaction_direction": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["in", "out"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "interaction_direction" ],
-                            "additionalProperties": false
-                        },
-                        "BodySceneMove": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "body_scene_move" ] },
-                                "interaction_direction": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["in", "out"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "interaction_direction" ],
-                            "additionalProperties": false
-                        },
-                        
-                        
-                        
-                        "BodyAreaMove": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "body_area_move" ] },
-                                "interaction_direction": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["in", "out"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                },
-                                "target_id": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": { "type": "integer" }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "interaction_direction", "target_id" ],
-                            "additionalProperties": false
-                        },
-                        "BodyLineCross": {
-                            "type": "object",
-                            "properties": {
-                                "event_class": { "enum": [ "body_line_cross" ] },
-                                "interaction_direction": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["ltr", "rtl"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                },
-                                "target_id": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": { "type": "integer" }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": ["event_class", "interaction_direction", "target_id"],
-                            "additionalProperties": false
-                        },
-                        
-                        
-                        
-                        "ArticleInteraction": {
-                            "properties": {
-                                "event_class": { "enum": [ "article_interaction" ] },
-                                "target_id": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": { "type": "integer" }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                },
-                                "interaction_type": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["look", "examine", "pick"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                },
-                                "interaction_direction": {
-                                    "oneOf": [
-                                        {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string",
-                                                "enum": ["begin", "end"]
-                                            }
-                                        },
-                                        {
-                                            "type": "string",
-                                            "enum": [ "*" ] 
-                                        }
-                                }
-                            },
-                            "required": [ "event_class", "target_id", "interaction_type",  "interaction_direction"],
-                            "additionalProperties": false
-                        },
-                    }
-                    
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "oneOf": [
-                            { "$ref": "#/definitions/FaceAttributeChange" },
-                            { "$ref": "#/definitions/BodyAttributeChange" },
-                            { "$ref": "#/definitions/FaceStatisticParameterChange" },
-                            { "$ref": "#/definitions/FaceSceneMove" },
-                            { "$ref": "#/definitions/BodySceneMove" },
-                            { "$ref": "#/definitions/BodyAreaMove" },
-                            { "$ref": "#/definitions/BodyLineCross" },
-                            { "$ref": "#/definitions/ArticleInteraction" },
-                        ]
-                    },
-                    "uniqueItems": true
-                }
-            
 + Response 200
 
 
 
+### Delete subscriber's subscriptions [DELETE]
 
+#### Request body
 
+No.
 
+#### Response
 
+##### Body
 
+No.
 
-
-# Group Continuous Attributes
-
-Continuous object attribute. Its value range is divided into subranges.
-
-Every subrange does not include high threshold. 
-For example if subrange is [0, 18], then this range is 0 &le; range &lt; 18.
-
-Objects and their attributes are:
+##### Errors
 
 <table>
-    <th bgcolor="#999999">Object name</th>
-    <th bgcolor="#999999">Attributes</th>
+    <th>Condition</th>                                  <th>Status</th>
     
-    <tr> <td>face</td> <td>age<br />distance</td> </tr>
-    <tr> <td>body</td> <td>distance</td> </tr>
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
 </table>
 
 
-## Continuous attributes of all objects [/continuous_attributes]
++ Response 200
 
-### Read all object continuous attributes subranges [GET]
+
+
+
+
+
+
+
+
+
+# Group Continuous attributes
+
+For purposes of event notification, object attributes with continuous values (like age, distance)
+need to be divided into subranges. When value goes from one subrange to another, this is notified.
+
+Continuous attributes are:
+
+<table>
+    <th>Object type</th> <th>Attributes</th>
+    
+    <tr class="code"> <td>face</td>   <td>age<br/>distance</td> </tr>
+    <tr class="code"> <td>body</td>   <td>distance</td> </tr>
+</table>
+
+Subranges of an attribute are represented by `Subranges` object:
+
+    Subranges:
+        {
+            "<name1>": [<a1>, <b1>],
+            "<name2>": [<a2>, <b2>],
+            ...
+        }
+
+where
+
+<table>
+    <th>Field</th>                  <th>Type</th>   <th>Description</th>
+    
+    <tr> <td class="code">name</td> <td>String</td> <td>Subrange name.</td> </tr>
+    <tr> <td class="code">a, b</td> <td>Real</td>   <td>Subrange endpoints.</td> </tr>
+</table>
+
+Every subrange is right-open: [a, b), i.e. a &le; x &lt; b. Subranges must not intersect
+and have gaps. If attribute value becomes greater then any specified subrange, it is considered
+to be in virtual subrange named `undefined`.
+
+`Subranges` object can be empty.
+
+
+
+## Continuous attributes of all object types and their subranges [/continuous_attributes]
+
+### Get subranges of all continuous attributes of all object types [GET]
+
+#### Request body
+
+No.
+
+
+#### Response
+
+##### Body
+
+    {
+        "face": {
+            "age": <Subranges>,
+            "distance": <Subranges>
+        },
+        "body": {
+            "distance": <Subranges>
+        }
+    }
+
 
 + Response 200
 
@@ -3233,23 +3092,53 @@ Objects and their attributes are:
                     "distance": {
                         "close": [0, 1.5],
                         "middle": [1.5, 3],
-                        "far": [3, 200]
+                        "far": [3, 10]
                     }
                 },
                 "body": {
                     "distance": {
                         "close": [0, 1.5],
                         "middle": [1.5, 3],
-                        "far": [3, 200]
+                        "far": [3, 10]
                     }
                 }
             }
 
-### Replace all object continuous attributes subranges [PUT]
 
-If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
+### Update subranges of all continuous attribute of all object types [PUT]
 
-If range has no equal crossing by subranges, then response is  400 Bad Request.
+#### Request body
+
+    {
+        "face": {
+            "age": <Subranges>,
+            "distance": <Subranges>
+        },
+        "body": {
+            "distance": <Subranges>
+        }
+    }
+
+Any object type or attribute may absent; it is not updated.
+
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                             <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>      <td class="code">409 Conflict</td></tr>
+    <tr><td>Invalid request structure.</td>        <td class="code">400 Bad Request</td></tr>
+    <tr><td>Unknown object type or attribute.</td> <td class="code">400 Bad Request</td></tr>
+    <tr><td>Subranges intersect or have gaps.</td> <td class="code">400 Bad Request</td></tr>
+</table>
+
 
 + Request
 
@@ -3271,14 +3160,14 @@ If range has no equal crossing by subranges, then response is  400 Bad Request.
                     "distance": {
                         "close": [0, 1.5],
                         "middle": [1.5, 3],
-                        "far": [3, 200]
+                        "far": [3, 10]
                     }
                 },
                 "body": {
                     "distance": {
                         "close": [0, 1.5],
                         "middle": [1.5, 3],
-                        "far": [3, 200]
+                        "far": [3, 10]
                     }
                 }
             }
@@ -3286,21 +3175,38 @@ If range has no equal crossing by subranges, then response is  400 Bad Request.
 + Response 200
 
 
-## Continuous attributes of object [/continuous_attributes/{object_name}]
+
+## Continuous attributes of object type [/continuous_attributes/{object_type}]
 
 + Parameters
 
-    + object_name (required, string, `face`)
+    + object_type (required, string, `face`)
     
-        Name of object, which has continuous attributes
+        Object type, which has continuous attributes
         
         + Values
         
             + `face`
             
             + `body`
+
             
-### Read object continuous attributes subranges [GET]
+### Get subranges of all continuous attributes of object type [GET]
+
+#### Request body
+
+No.
+
+
+#### Response
+
+##### Body
+
+    {
+        "<attribute1>": <Subranges1>,
+        ...
+    }
+
 
 + Response 200
 
@@ -3311,102 +3217,50 @@ If range has no equal crossing by subranges, then response is  400 Bad Request.
     + Body
     
             {
-                "face": {
-                    "age": {
-                        "child": [0, 18],
-                        "young adult": [18, 25],
-                        "adult": [25, 35],
-                        "middle aged": [35, 45],
-                        "senior": [45, 110]
-                    },
-                    "distance": {
-                        "close": [0, 1.5],
-                        "middle": [1.5, 3],
-                        "far": [3, 200]
-                    }
-                }
-            }
-
-### Replace all object continuous attributes subranges [PUT]
-
-If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
-
-If range have no equal crossing by subranges, then response is  400 Bad Request.
-
-+ Request
-
-    + Headers
-    
-            Content-Type: application/json
-        
-    + Body
-    
-            {
-                "face": {
-                    "age": {
-                        "child": [0, 18],
-                        "adult": [18, 45],
-                        "senior": [45, 110]
-                    },
-                    "distance": {
-                        "close": [0, 3],
-                        "far": [3, 200]
-                    }
-                }
-            }
-
-+ Response 200
-
-
-## Continuous attribute of object [/continuous_attributes/{object_name}/{attribute_name}]
-
-+ Parameters
-
-    + object_name (required, string, `face`)
-    
-        Name of object, which has continuous attributes
-        
-        + Values
-        
-            + `face`
-            
-            + `body`
-            
-    + attribute_name (required, string, `age`)
-    
-        Name of continuous attribute
-        
-        + Values
-        
-            + `age`
-            
-            + `distance`
-            
-### Read object continuous attribute subranges [GET]
-
-+ Response 200
-
-    + Headers
-    
-            Content-Type: application/json
-        
-    + Body
-    
-            {
-                "age":  {
+                "age": {
                     "child": [0, 18],
                     "young adult": [18, 25],
                     "adult": [25, 35],
                     "middle aged": [35, 45],
                     "senior": [45, 110]
-               }
+                },
+                "distance": {
+                    "close": [0, 1.5],
+                    "middle": [1.5, 3],
+                    "far": [3, 10]
+                }
             }
- 
-### Replace all object continuous attributes ranges [PUT]
 
-If "object" or "attribute" name has wrong value, then response is  400 Bad Request.
 
-If range have no equal crossing by subranges, then response is  400 Bad Request.
+### Update subranges of all continuous attributes of object type [PUT]
+
+#### Request body
+
+    {
+        "<attribute1>": <Subranges1>,
+        ...
+    }
+
+Any attribute may absent; it is not updated.
+
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                             <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>      <td class="code">409 Conflict</td></tr>
+    <tr><td>Invalid request structure.</td>        <td class="code">400 Bad Request</td></tr>
+    <tr><td>Unknown attribute.</td>                <td class="code">400 Bad Request</td></tr>
+    <tr><td>Subranges intersect or have gaps.</td> <td class="code">400 Bad Request</td></tr>
+</table>
+
 
 + Request
 
@@ -3421,7 +3275,111 @@ If range have no equal crossing by subranges, then response is  400 Bad Request.
                     "child": [0, 18],
                     "adult": [18, 45],
                     "senior": [45, 110]
+                },
+                "distance": {
+                    "close": [0, 3],
+                    "far": [3, 10]
                 }
+            }
+
++ Response 200
+
+
+## Continuous attribute [/continuous_attributes/{object_type}/{attribute}]
+
++ Parameters
+
+    + object_type (required, string, `face`)
+    
+        Object type, which has continuous attributes
+        
+        + Values
+        
+            + `face`
+            
+            + `body`
+            
+    + attribute (required, string, `age`)
+    
+        Name of continuous attribute
+        
+        + Values
+        
+            + `age`
+            
+            + `distance`
+
+
+
+### Get subranges of continuous attribute [GET]
+
+#### Request body
+
+No.
+
+#### Response
+
+##### Body
+
+    <Subranges>
+
+
++ Response 200
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            {
+                "child": [0, 18],
+                "young adult": [18, 25],
+                "adult": [25, 35],
+                "middle aged": [35, 45],
+                "senior": [45, 110]
+            }
+
+
+ 
+### Replace subranges of continuous attribute [PUT]
+
+#### Request body
+
+    <Subranges>
+
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                             <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>      <td class="code">409 Conflict</td></tr>
+    <tr><td>Invalid request structure.</td>        <td class="code">400 Bad Request</td></tr>
+    <tr><td>Subranges intersect or have gaps.</td> <td class="code">400 Bad Request</td></tr>
+</table>
+
+
++ Request
+
+    + Headers
+    
+            Content-Type: application/json
+        
+    + Body
+    
+            {
+                "child": [0, 18],
+                "young adult": [18, 25],
+                "adult": [25, 35],
+                "middle aged": [35, 45],
+                "senior": [45, 110]
             }
 
 + Response 200
