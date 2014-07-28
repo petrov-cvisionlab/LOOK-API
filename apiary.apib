@@ -1863,6 +1863,9 @@ For convenience, several conceptual fields combine into one actual field `event_
 </table>
 
 
+<br/>
+<br/>
+
 
 ## Common structure of filters and notifications
 
@@ -1910,6 +1913,10 @@ where
         </td>
     </tr>
 </table>
+
+
+<br/>
+<br/>
 
 
 ## Event classes
@@ -2053,6 +2060,9 @@ where
     }
 
 
+<br/>
+<br/>
+
 
 ### Statistic parameter change
 
@@ -2147,6 +2157,9 @@ where
         }
     }
 
+
+<br/>
+<br/>
 
 
 ### Scene interaction (dwell events)
@@ -2270,245 +2283,291 @@ where
     }
 
 
+<br/>
+<br/>
 
-// { BEGIN   TODO (not LOOK)
 
+### Interaction with area sensor (MOVE)
 
-
-## Body area interaction EventFilter
-
-### Request
-
-Common filter JSON object structure is:
+#### Filter
 
     {
-        "event_type": "body_area_move",
-        "target_id": "*" or [target_id-list],
-        "interaction_direction": "*" or [interaction_direction-list]
+        "event_class": "area_move",
+        "target_id": [ <target_id>-list ] | "*",
+        "interaction_direction": [ <direction>-list ] | "*"
     }
-    
-where *target_id* is area ID and directions are:
 
- - "in"
- - "out"
-    
-#### Examples
+See description of fields below.
 
-Filter to any body area interaction change
+
+##### Examples
+
+Filter for objects moving in/out of any area sensor:
 
     {
-        "event_type": "body_area_move",
+        "event_class": "area_move",
         "target_id": "*",
         "interaction_direction": "*"
     }
     
-or filter to body area in direction change
+Filter for objects entering area with ID = 1:
 
     {
-        "event_type": "body_area_move",
-        "target_id": "*",
-        "interaction_direction": ["in"]
+        "event_class": "area_move",
+        "target_id": [ 1 ],
+        "interaction_direction": [ "in" ]
     }
-    
-### Response
 
-Common structure of notification JSON object is:
+    
+#### Notification
 
     {
-        "event_type": "body_area_move",
-        "timestamp": timestamp,
-        "target_id": id,
-        "object_id": id,
-        "interaction_direction": "interaction_direction"
-        "object": { 
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
+        "timestamp": <timestamp>,
+        "event_class": "area_move",
+        "object_id": <object_id>,
+        "target_id": <target_id>,
+        "interaction_direction": <direction>
     }
+
+where
+
+<table>
+    <th>Field</th> <th>Type</th> <th>Description</th>
     
-Object attributes are was described above.
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object_id</td>
+        <td>Integer</td>
+        <td>ID of object.</td>
+    </tr>
+    <tr>
+        <td class="code">target_id</td>
+        <td>Integer</td>
+        <td>ID of area sensor.</td>
+    </tr>
+    <tr>
+        <td class="code">direction</td>
+        <td>String</td>
+        <td><p>Possible values are <code>in</code> and <code>out</code></p></td>
+    </tr>
+</table>
+
 
 #### Example
 
     {
-        "event_type": "body_area_move",
         "timestamp": 1362133259629,
-        "target_id": 5,
+        "event_class": "area_move",
         "object_id": 11,
+        "target_id": 5,
         "interaction_direction": "in",
-        "object": { 
-            "distance": 1.1,
-            "screen_position_x": 320,
-            "screen_position_y": 467,
-        }
     }
 
 
-## Body line interaction EventFilter
+<br/>
+<br/>
 
-### Request
 
-Common filter JSON object structure is:
+### Interaction with line sensor (MOVE)
+
+#### Filter
 
     {
-        "event_type": "body_line_cross",
-        "target_id": "*" or [target_id-list],
-        "interaction_direction": "*" or [interaction_direction-list]
+        "event_class": "line_cross",
+        "target_id": [ <target_id>-list ] | "*",
+        "interaction_direction": [ <direction>-list ] | "*"
     }
     
-where *target_id* is line ID and directions are:
+See description of fields below.
 
- - "ltr" - left to right
- - "rtl" - right to left
     
-#### Examples
+##### Examples
 
-Filter to any body line interaction change
+Filter for objects crossing any line sensor in any direction:
 
     {
-        "event_type": "body_line_cross",
+        "event_class": "line_cross",
         "target_id": "*",
         "interaction_direction": "*"
     }
     
-or filter to body line left to right direction change
+Filter for objects crossing line sensor with ID = 1 from left to right:
 
     {
-        "event_type": "body_line_cross",
-        "target_id": "*",
-        "interaction_direction": ["ltr"]
+        "event_class": "line_cross",
+        "target_id": [ 1 ],
+        "interaction_direction": [ "left_to_right" ]
     }
-    
-### Response
 
-Common structure of notification JSON object is:
+    
+#### Notification
 
     {
-        "event_type": "body_line_cross",
-        "timestamp": timestamp,
-        "target_id": id,
-        "object_id": id,
-        "interaction_direction": "interaction_direction"
-        "object": { 
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
+        "timestamp": <timestamp>,
+        "event_class": "line_cross",
+        "object_id": <object_id>,
+        "target_id": <target_id>,
+        "interaction_direction": <direction>
     }
-    
-Object attributes are was described above.
 
-#### Example
+where
+
+<table>
+    <th>Field</th> <th>Type</th> <th>Description</th>
+    
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object_id</td>
+        <td>Integer</td>
+        <td>ID of object.</td>
+    </tr>
+    <tr>
+        <td class="code">target_id</td>
+        <td>Integer</td>
+        <td>ID of line sensor.</td>
+    </tr>
+    <tr>
+        <td class="code">direction</td>
+        <td>String</td>
+        <td><p>Possible values are <code>left_to_right</code> and <code>right_to_left</code>.</p></td>
+    </tr>
+</table>
+
+
+##### Example
 
     {
-        "event_type": "body_line_cross",
         "timestamp": 1362133259629,
-        "target_id": 5,
+        "event_class": "line_cross",
         "object_id": 11,
-        "interaction_direction": "ltr",
-        "object": { 
-            "distance": 1.1,
-            "screen_position_x": 320,
-            "screen_position_y": 467,
-        }
-    }
-
-
-## article interaction
-
-### Request
-
-Common filter JSON object structure is:
-
-    {
-        "event_type": "article_interaction",
-        "target_id": [target_id-list],
-        "interaction_type": "*" or [interaction_type-list],
-        "interaction_direction": "*" or [interaction_direction-list]
-    }
-    
-where interaction_types are:
-
- - "look" - look at article
- - "examine" - examine article
- - "pick" - article in basket
- 
-interaction_direction are:
-
- - "begin"
- - "end"
-    
-#### Examples
-
-Filter to person article any type interaction and direction change
-
-    {
-        "event_type": "article_interaction",
-        "target_id": [1,12],
-        "interaction_type": "*",
-        "interaction_direction": "*"
-    }
-    
-or filter to any person article look and pick interaction and any direction change
-
-    {
-        "event_type": "article_interaction",
-        "target_id": "*",
-        "interaction_type": ["look", "pick"],
-        "interaction_direction": "*"
-    }
-
-### Response
-
-Common structure of notification JSON object is:
-
-    {
-        "event_type": "article_interaction",
-        "timestamp": timestamp,
-        "target_id": id,
-        "person_id": id,
-        "interaction_direction": "interaction_direction"
-        "object": { 
-            "attribute_name_1": "attribute_value",
-            ...
-            "attribute_name_n": "attribute_value"
-        }
-    }
-    
-Object attributes are was described above.
-
-#### Example
-
-    {
-        "event_type": "article_interaction",
-        "timestamp": 1362133259629,
         "target_id": 5,
-        "person_id": 11,
+        "interaction_direction": "left_to_right",
+    }
+
+
+<br/>
+<br/>
+
+
+### Interaction with article (speculation)
+
+#### Filter
+
+    {
+        "event_class": "article_interaction",
+        "interaction_type": [ <interaction_type>-list ] | "*",
+        "interaction_direction": [ <direction>-list] | "*",
+        "target_id": [ <target_id>-list ] | "*"
+    }
+    
+See decription of fields below.
+
+
+##### Examples
+
+Filter for any interaction with any article:
+
+    {
+        "event_class": "article_interaction",
+        "interaction_type": "*",
+        "interaction_direction": "*",
+        "target_id": "*"
+    }
+    
+Filter for cases when customer looks at or takes articles with ID 2 or 15:
+
+    {
+        "event_class": "article_interaction",
+        "interaction_type": [ "look", "take" ],
+        "interaction_direction": [ "begin" ]
+        "target_id": [ 2, 15 ],
+    }
+
+
+#### Notification
+
+    {
+        "timestamp": <timestamp>,
+        "event_class": "article_interaction",
+        "person_id": <object_id>,
+        "target_id": <target_id>,
+        "interaction_type": <interaction_type>,
+        "interaction_direction": <direction>
+    }
+
+where
+
+<table>
+    <th>Field</th> <th>Type</th> <th>Description</th>
+    
+    <tr>
+        <td class="code">timestamp</td>
+        <td>ApiTimeMs</td>
+        <td>Timestamp of frame event occured on.</td>
+    </tr>
+    <tr>
+        <td class="code">event_class</td>
+        <td>String</td>
+        <td>Event class.</td>
+    </tr>
+    <tr>
+        <td class="code">object_id</td>
+        <td>Integer</td>
+        <td>ID of object.</td>
+    </tr>
+    <tr>
+        <td class="code">interaction_type</td>
+        <td>String</td>
+        <td><p>Possible values are <code>look</code> (customer looks at the article),
+               <code>examine</code> (holds and examines the article), <code>take</code>
+               (takes the article into his basket)</p></td>
+    </tr>
+    <tr>
+        <td class="code">direction</td>
+        <td>String</td>
+        <td><p>Possible values are <code>begin</code> (interaction has began) and <code>end</code>
+               (interaction has ended)</p></td>
+    </tr>
+    <tr>
+        <td class="code">target_id</td>
+        <td>Integer</td>
+        <td>ID of article.</td>
+    </tr>
+</table>
+    
+
+##### Example
+
+    {
+        "timestamp": 1362133259629,
+        "event_type": "article_interaction",
+        "object_id": 11,
         "interaction_type": "look",
         "interaction_direction": "begin",
-        "object": {
-            "age": 32,
-            "age_confidence": 0.87,
-            "body_distance": 1.1,
-            "body_screen_position_x": 320,
-            "body_screen_position_y": 467,
-            "emotion": "smile",
-            "emotion_confidence": "smile",
-            "face_distance": 1.1,
-            "face_screen_position_x": 320,
-            "face_screen_position_y": 467,
-            "gender": 1,
-            "gender_confidence": 0.78,
-            "look": false,
-            "race": "europe",
-            "race_confidence": 0.76
-        }
+        "target_id": 5
     }
 
 
-// { END   TODO (not LOOK)
-
+<br/>
+<br/>
 
 
 ## Event subscribers collection [/notification_service/subscribers]
