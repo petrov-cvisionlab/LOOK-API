@@ -1752,8 +1752,8 @@ All events fall into three **types**:
                                    person took an article into basket etc.
 
 Applications can work with different types of objects. Particularly, LOOK handles faces and bodies
-separately. Object types differ in possible attributes and interactions. So events of types
-"attribute change" and "interaction" conceptually have field `object_type`.
+separately. Object types differ in possible attributes, statistic parameters and interactions.
+So each event conceptually has field `object_type`.
 
 
 
@@ -1778,6 +1778,7 @@ Conceptually the structure of this event is
 
     {
         event_type: statistic_parameter_change
+        object_type:
         
         parameter:
         value:
@@ -1791,7 +1792,7 @@ Conceptually the structure of this event is
         object_type:
         object_id:
         
-        target_type:
+        target_type:   # scene, area, line, article etc
         target_id:
         interaction_type:
         interaction_direction:
@@ -1818,7 +1819,7 @@ attributes, so the filter</p>
 potential confusion by removing <code>object_type</code> and combining it with <code>event_type</code>.
 </p>
 
-<p>This reasons lead us to concept of <b>event class</b>.</p>
+<p>These reasons lead us to concept of <b>event class</b>.</p>
 </div>
 
 
@@ -1919,13 +1920,14 @@ where
     EventFilter:
         {
             "event_class": "face_attribute_change" | "body_attribute_change",
-            "attribute": [ attribute-list ] | "*"
+            "attribute": [ <attribute>-list ] | "*"
         }
-    
-Possible attributes are:<br/>
+
+Possible values of `<attribute>` are:<br/>
 for faces - `age`, `gender`, `emotion`, `race`, `look`, `distance`;<br/>
 for bodies - `distance`.<br/>
 Description of attributes see in `/data` resource section.
+The `"*"` means all attributes corresponding to object type specified by event class (face or body).
 
 
 ##### Examples
@@ -2063,6 +2065,7 @@ where
     
 where `<parameter>` is one of `primary_gender`, `majority_gender` or `main_person`. Description
 of parameters see in `/data` resource section.
+The `"*"` means all attributes corresponding to object type specified by event class (face).
 
 
 ##### Examples
@@ -2156,6 +2159,7 @@ where
         }
     
 where `<interaction_direction>` is `in` or `out`.
+The `"*"` means either direction.
 
 
 ##### Examples
@@ -2554,6 +2558,8 @@ called for each of them.
 
 See individual PUT, POST, DELETE operations for additional notes.
 
+Note. One method to preserve contents of a subscriber, is to specify only its ID and no other fields.
+
 
 #### Request body
 
@@ -2634,7 +2640,10 @@ Also there might be errors related to event filters (see
 
     <Subscriber>
 
-Field `event_filters` may be absent.
+Field `id` must be absent. Field `event_filters` may be absent.
+
+If field `event_filters` is present, it is processed after subscriber is created as if
+`PUT /notification_service/subscribers/{id}/event_filters` was called.
 
 #### Response
 
@@ -2778,6 +2787,9 @@ After update the subscriber must not be equal to any other.
 
 Field `id` must be either absent or equal to parameter `id`. Any other field may be absent.
 
+If field `event_filters` is present, it is processed after subscriber is updated as if
+`PUT /notification_service/subscribers/{id}/event_filters` was called.
+
 
 #### Response
 
@@ -2854,16 +2866,18 @@ No.
     <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
 </table>
 
+
 + Response 200
 
 
 
 ## Subscriber subscriptions [/notification_service/subscribers/{id}/event_filters]
 
-This resource represents collection of subscriptions of subscriber with identifier `id`.
+This resource represents collection of subscriptions (expressed as event filters) of subscriber
+with identifier `id`.
 
 
-### Get subscriber subscriptions [GET]
+### Get subscriber's subscriptions [GET]
 
 #### Request body
 
@@ -2893,15 +2907,54 @@ No.
 
 
 
-### Update subscriptions of subscriber [PUT]
+### Update subscriber's subscriptions [PUT]
 
-// BEGIN TODO
+#### Request body
 
-If application is not in idle mode, the response status is 409 Conflict.
+    [ <EventFilter>-list ]
 
-If any event filter has invalid "event_type", response status is 400 Bad Request.
+#### Response
 
-If neccessary event filter attribute has wrong value or absent, the response status is 400 Bad Request.
+##### Body
+
+No.
+
+##### Errors
+
+General errors:
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+    <tr><td>Unknown event class.</td>                   <td class="code">400 Bad Request</td></tr>
+</table>
+
+Errors specific to event class:
+
+<table>
+    <th>Event class</th> <th>Condition</th> <th>Status</th>
+    
+    <tr>
+        <td class="code">face_attribute_change |<br/>
+                         body_attribute_change</td>
+        <td>At least one attribute is unknown for object type specified by event class.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    
+    <tr>
+        <td class="code">face_statistic_parameter_change</td>
+        <td>At least one parameter is unknown for object type specified by event class.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+    
+    <tr>
+        <td class="code">face_scene_move |<br/>
+                         body_scene_move</td>
+        <td>Invalid interaction direction.</td>
+        <td class="code">400 Bad Request</td>
+    </tr>
+</table>
 
 
 + Request (application/json)
@@ -2910,15 +2963,40 @@ If neccessary event filter attribute has wrong value or absent, the response sta
     
             [
                 {
-                    "event_type": "face_attribute_change",
-                    "attribute": ["gender", "age", "look"]
+                    "event_class": "face_attribute_change",
+                    "attribute": [ "gender", "age", "look" ]
                 },
                 {
-                    "event_type": "statistic_parameter_change",
-                    "attribute": ["main_person"]
+                    "event_class": "face_statistic_parameter_change",
+                    "attribute": [ "main_person" ]
                 }
             ]
             
++ Response 200
+
+
+
+### Delete subscriber's subscriptions [DELETE]
+
+#### Request body
+
+No.
+
+#### Response
+
+##### Body
+
+No.
+
+##### Errors
+
+<table>
+    <th>Condition</th>                                  <th>Status</th>
+    
+    <tr><td>Service is not in idle mode.</td>           <td class="code">409 Conflict</td></tr>
+</table>
+
+
 + Response 200
 
 
