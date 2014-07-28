@@ -1712,7 +1712,7 @@ Subscriber is defined by URL and HTTP method.
             "url" : "url",
             "method" : "method",
             
-            "event_filters" : [EventFilter-list]
+            "event_filters" : [ <EventFilter>-list ]
         }
 
 where
@@ -2291,11 +2291,12 @@ where
 
 #### Filter
 
-    {
-        "event_class": "area_move",
-        "target_id": [ <target_id>-list ] | "*",
-        "interaction_direction": [ <direction>-list ] | "*"
-    }
+    EventFilter:
+        {
+            "event_class": "area_move",
+            "target_id": [ <target_id>-list ] | "*",
+            "interaction_direction": [ <direction>-list ] | "*"
+        }
 
 See description of fields below.
 
@@ -2381,11 +2382,12 @@ where
 
 #### Filter
 
-    {
-        "event_class": "line_cross",
-        "target_id": [ <target_id>-list ] | "*",
-        "interaction_direction": [ <direction>-list ] | "*"
-    }
+    EventFilter:
+        {
+            "event_class": "line_cross",
+            "target_id": [ <target_id>-list ] | "*",
+            "interaction_direction": [ <direction>-list ] | "*"
+        }
     
 See description of fields below.
 
@@ -2471,12 +2473,13 @@ where
 
 #### Filter
 
-    {
-        "event_class": "article_interaction",
-        "interaction_type": [ <interaction_type>-list ] | "*",
-        "interaction_direction": [ <direction>-list] | "*",
-        "target_id": [ <target_id>-list ] | "*"
-    }
+    EventFilter:
+        {
+            "event_class": "article_interaction",
+            "interaction_type": [ <interaction_type>-list ] | "*",
+            "interaction_direction": [ <direction>-list] | "*",
+            "target_id": [ <target_id>-list ] | "*"
+        }
     
 See decription of fields below.
 
