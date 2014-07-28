@@ -1729,7 +1729,7 @@ where
          <td>HTTP method used in request to subscriber on event.</td> </tr>
     <tr> <td>event_filters</td> <td>Array</td>
          <td>Filters defining which events this subscriber receives.<br/>
-             Conceptually this field specifies <b>subscription</b> of the subscriber.<br/>
+             Conceptually this field specifies <b>subscriptions</b> of the subscriber.<br/>
              This field is also available via separate resource.</td> </tr>
 </table>
 
@@ -1742,7 +1742,8 @@ its subscriptions in one request. As a consequence, `event_filters` field
 
 ## Conceptual structure of events
 
-Note that this project is aimed to define universal event mechanism for LOOK and MOVE, and also contains speculations about possible future events.
+Note that this project is aimed to define universal event mechanism for LOOK and MOVE, and
+also contains speculations about possible future events.
 
 All events fall into three **types**:
 
@@ -2553,12 +2554,13 @@ No.
 
 Subscribers, having ID specified, are updated as if individual PUT was called for each of them.
 Subscribers, having no ID specified, are added as if individual POST was called for each of them.
-Existing subscribers, not specified (by ID) in request, are deleted as if individual POST was
+Existing subscribers, not specified (by ID) in request, are deleted as if individual DELETE was
 called for each of them.
 
 See individual PUT, POST, DELETE operations for additional notes.
 
-Note. One method to preserve contents of a subscriber, is to specify only its ID and no other fields.
+Note. One of methods to preserve contents of a subscriber, is to specify only its ID and no
+other fields.
 
 
 #### Request body
@@ -2634,7 +2636,7 @@ Also there might be errors related to event filters (see
             ]
 
 
-### Add subscriber and, optionally, its subscription [POST]
+### Add subscriber and, optionally, its subscriptions [POST]
 
 #### Request body
 
@@ -2871,7 +2873,7 @@ No.
 
 
 
-## Subscriber subscriptions [/notification_service/subscribers/{id}/event_filters]
+## Subscriber's subscriptions [/notification_service/subscribers/{id}/event_filters]
 
 This resource represents collection of subscriptions (expressed as event filters) of subscriber
 with identifier `id`.
