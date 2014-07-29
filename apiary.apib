@@ -1304,34 +1304,81 @@ The _time_ values are specified as UTC in ISO 8601 extended format:
     YYYY-MM-DDTHH:MM:SS
     
 ### columns
-Specifies list of object attributes to return.  
-The list format is comma-separated (without spaces).  
-Attributes are divided into time attributes and classification attributes. 
-Time attributes are common to faces and bodies. Classification attributes are specific to faces.  
-The time attributes are (detailed description is in Response section):
+
+Specifies list of object attributes to return.
+
+The list format is comma-separated (without spaces).
+
+Attributes are divided into **time attributes**, **social attributes**, **state
+attributes** and **statistic attributes**.
+
+Here is the brief description of attributes. Detailed description is in Response section.
+
+Time attributes:
 
 <table>
-    <th bgcolor="#999999">Name</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>enter_time</td> <td>Time when object was (first) detected.</td> </tr>
-    <tr> <td>exit_time</td> <td>Time when object was last seen.</td> </tr>
-    <tr> <td>time_periods</td> <td>Sequence of time periods during which object was in sight and exited in between.</td> </tr>
+         <th>Name</th>         <th>Description</th>
+    
+    <tr> <td>enter_time</td>   <td>Time when object was (first) detected.</td> </tr>
+    <tr> <td>exit_time</td>    <td>Time when object was last seen.</td> </tr>
+    <tr> <td>time_periods</td> <td>Sequence of time periods during which object was in sight
+                                   and exited in between.</td> </tr>
 </table>
 
 Time attributes can be queried only for time period, but not for the current frame.  
-Classification attributes of faces are (detailed description is in Response section):
+
+
+Social attributes:
+
 <table>
-    <th bgcolor="#999999">Name</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>gender</td> <td>Person gender.</td> </tr>
+         <th>Name</th>              <th>Description</th>
+    
+    <tr> <td>gender</td>            <td>Person gender.</td> </tr>
     <tr> <td>gender_confidence</td> <td>Confidence of gender value.</td> </tr>
-    <tr> <td>age</td> <td>Person age.</td> </tr>
-    <tr> <td>age_confidence</td> <td>Confidence of age value.</td> </tr>
+    <tr> <td>age</td>               <td>Person age.</td> </tr>
+    <tr> <td>age_confidence</td>    <td>Confidence of age value.</td> </tr>
+    <tr> <td>race</td>              <td>Person race.</td> </tr>
 </table>
 
-Classification attributes can be queried for time period or current frame. 
-        
-### parameteres
+Only Face objects have social attributes. These attributes can be queried for time period
+or current frame.
+
+
+State attributes:
+
+<table>
+         <th>Name</th> <th>Description</th>
+    
+    <tr> <td>screen_position_x</td> <td>Position - X coordinate.</td> </tr>
+    <tr> <td>screen_position_y</td> <td>Position - Y coordinate.</td> </tr>
+    <tr> <td>distance</td>          <td>Distance to camera.</td> </tr>
+    <tr> <td>emotion</td>           <td>Person emotion.</td> </tr>
+    <tr> <td>look</td>              <td>If person looks at camera.</td> </tr>
+</table>
+
+Body objects do not have `look` attribute.
+
+State attributes can be queried only for current frame. 
+
+
+Statistic attributes:
+
+<table>
+         <th>Name</th>         <th>Description</th>
+    
+    <tr> <td>dwell_time</td>   <td>Time interval from first appearance to exit or current
+                                   moment.</td> </tr>
+    <tr> <td>face_time</td>    <td>Sum of time intervals when person looked at the camera.</td> </tr>
+    <tr> <td>look_counter</td> <td>Number of periods when person looked at the camera.</td> </tr>
+</table>
+
+Body objects do not have `face_time` and `look_counter` attributes.
+
+Statistic attributes can be queried for time period or current frame.
+
+
+
+### parameters
 List of statistic parameters to return.  
 Statistic parameters are properties of sets of objects as opposed to individual objects.  
 This query parameter is valid only for the Face objects and current session (time=now).  
@@ -1339,102 +1386,145 @@ The list format is comma-separated (without spaces).
 The statistic parameters are (detailed description is in Response section):
 
 <table>
-    <th bgcolor="#999999">Name</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>primary_gender</td> <td>Gender of the Face object longest in view (for all view periods) during the current session.</td> </tr>
+    <th>Name</th> <th>Description</th>
+    <tr> <td>primary_gender</td>  <td>Gender of the Face object longest in view (for all view periods)
+                                      during the current session.</td> </tr>
     <tr> <td>majority_gender</td> <td>Current most prominent gender.</td> </tr>
+    <tr> <td>main_person</td>     <td>Most prominent person.</td> </tr>
 </table> 
+
+
 
 # Response
 
     JSON data
     {
-      "objects": [ object-list ],
-      "primary_gender": primary_gender,
-      "majority_gender": majority_gender,
-      "main_person": main_person, 
+        "objects": [ <object>-list ],
+        
+        "primary_gender": <primary_gender>,
+        "majority_gender": <majority_gender>,
+        "main_person": <main_person>
     }
     
     object:
         {
-            "session_id": session_id,
-            "id": id,
-                 "distance": distance,
-                 "face_time": face_time,
-                 "dwell_time": dwell_time,
-                 "screen_position_x": screen_position_x,
-                 "screen_position_y": screen_position_y,
-            "enter_time": enter_time,
-            "exit_time": exit_time,
-            "clean_exit": clean_exit,
-            "time_periods": [ time-period-list ],
-            "age": age,
-            "age_confidence": age_confidence,
-            "gender": gender,
-            "gender_confidence": gender_confidence
+            "session_id": <session_id>,
+            "id": <id>,
+            
+            "enter_time": <enter_time>,
+            "exit_time": <exit_time>,
+            "clean_exit": <clean_exit>,
+            "time_periods": [ <time-period>-list ],
+            
+            "age": <age>,
+            "age_confidence": <age_confidence>,
+            "gender": <gender>,
+            "gender_confidence": <gender_confidence>,
+            "race": <race>,
+            
+            "screen_position_x": <screen_position_x>,
+            "screen_position_y": <screen_position_y>,
+            "distance": <distance>,
+            "emotion": <emotion>,
+            "look": <look>,
+
+            "dwell_time": <dwell_time>,
+            "face_time": <face_time>,
+            "look_counter": <look_counter>
         }
     
     time-period:
         {
-            "enter_time": enter_time,
-            "exit_time": exit_time
+            "enter_time": <enter_time>,
+            "exit_time": <exit_time>
         }
         
 Some fields can be absent if they were not specified in query. The object-list can be empty.
 
-The following tables describes the fields.
+The following table describes the fields.
 
-### Identifiers
 <table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>session_id</td> <td>Integer</td> <td>Data service session ID. Present only if request was made for time period.</td> </tr>
-    <tr> <td>id</td> <td>Integer</td> <td>Object ID, unique per session. A pair of session_id and id makes up an installation-wide unique identifier.</td> </tr>
-</table>
-
-###  Common object attributes
-<table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>enter_time</td> <td>DateTime</td> <td>Time when object was (first) detected.See “Results for time periods” for details.</td> </tr>
-    <tr> <td>exit_time</td> <td>DateTime</td> <td>Time when object was last seen. Note that this can be time when object exited or was lost.See “Results for time periods” for details.</td> </tr>
-    <tr> <td>clean_exit</td> <td>Boolean</td> <td>Tells if exit_time is taken from actually recorded exit event as opposed to last time object was seen before abnormal application termination.Present only when data for time period was requested.</td> </tr>
-    <tr> <td>time-period.enter_time</td> <td>DateTime</td> <td>Start time of time period. The enter_time of first period is the same as object.enter_time.See “Results for time periods” for details.</td> </tr>
-    <tr> <td>time-period.exit_time</td> <td>DateTime</td> <td>End time of time period. The exit_time of last period is the same as object.exit_time.See “Results for time periods” for details.</td> </tr>
-</table>
-
-### Face classification attributes
-<table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>age</td> <td>Real</td> <td>Person age.</td> </tr>
-    <tr> <td>age_confidence</td> <td>Real</td> <td>Confidence of age value in interval [0, 1].</td> </tr>
-    <tr> <td>distance</td> <td>Real</td> <td>Distance between camera and face in meters.</td> </tr>
-    <tr> <td>face_time</td> <td>Real</td> <td>Sum of all periods when current face being detected.</td> </tr>
-    <tr> <td>dwell_time</td> <td>Real</td> <td>Period from the first face appearance to the current moment. </td> </tr>
-    <tr> <td>screen_position_x</td> <td>Integer</td> <td>X position of a face center in pixels.</td> </tr>
-    <tr> <td>screen_position_y</td> <td>Integer</td> <td>Y position of a face center in pixels.</td> </tr>
-    <tr> <td>gender</td> <td>Integer</td> <td>Person gender: -1 for males, 1 for females, 0 for children under 10 years old.</td> </tr>
-    <tr> <td>gender_confidence</td> <td>Real</td> <td>Confidence of gender value in interval [0, 1].</td> </tr>
-</table>
-
-### Statistic parameters        
-<table>
-    <th bgcolor="#999999">Field</th>
-    <th bgcolor="#999999">Type</th>
-    <th bgcolor="#999999">Description</th>
-    <tr> <td>primary_gender</td> 
-         <td>Integer</td> 
-         <td>Gender of the Face object longest in view (for all view periods) during the current session. 
-             If there are two or more objects with equal duration, the one that was detected first is returned.<br />
-             Value: -1 for male, 1 for female, null if no Face objects have been seen yet.
+         <th>Field</th>      <th>Type</th>
+         <th>Description</th>
+    
+    <tr class="section-header"><td colspan="3">Identifiers</td></tr>
+    
+    <tr> <td class="code">session_id</td> <td>Integer</td>
+         <td>Data service session ID. Present only if request was made for time period.</td> </tr>
+    <tr> <td class="code">id</td>         <td>Integer</td>
+         <td>Object ID, unique per session. A pair of session_id and id makes up an installation-wide unique identifier.</td> </tr>
+    
+    <tr class="section-header"><td colspan="3">Time attributes</td></tr>
+    
+    <tr> <td class="code">enter_time</td>             <td>DateTime</td>
+         <td>Time when object was (first) detected.See “Results for time periods” for details.</td> </tr>
+    <tr> <td class="code">exit_time</td>              <td>DateTime</td>
+         <td>Time when object was last seen. Note that this can be time when object exited or was
+             lost. See “Results for time periods” for details.</td> </tr>
+    <tr> <td class="code">clean_exit</td>             <td>Boolean</td>
+         <td>Tells if exit_time is taken from actually recorded exit event as opposed to last
+             time object was seen before abnormal application termination.
+             Present only in time period responses.</td> </tr>
+    <tr> <td class="code">time-period.enter_time</td> <td>DateTime</td>
+         <td>Start time of time period.
+             The enter_time of first period is the same as object.enter_time.
+             See “Results for time periods” for details.</td> </tr>
+    <tr> <td class="code">time-period.exit_time</td>  <td>DateTime</td>
+         <td>End time of time period.
+             The exit_time of last period is the same as object.exit_time.
+             See “Results for time periods” for details.</td> </tr>
+    
+    <tr class="section-header"><td colspan="3">Social attributes</td></tr>
+    
+    <tr> <td class="code">age</td>               <td>Real</td>
+         <td>Person age.</td> </tr>
+    <tr> <td class="code">age_confidence</td>    <td>Real</td>
+         <td>Confidence of age value in interval [0, 1].</td> </tr>
+    <tr> <td class="code">gender</td>            <td>String</td>
+         <td><p>Person gender: <code>male</code> or <code>female</code>.</p></td> </tr>
+    <tr> <td class="code">gender_confidence</td> <td>Real</td>
+         <td>Confidence of gender value in interval [0, 1].</td> </tr>
+    <tr> <td class="code">race</td>              <td>String</td>
+         <td><p>Person race: <code>white</code>, <code>black</code>, <code>asian</code>,
+                <code>arab</code>, <code>hispanic</code></p></td> </tr>
+    
+    <tr class="section-header"><td colspan="3">State attributes</td></tr>
+    
+    <tr> <td class="code">screen_position_x</td> <td>Real</td>
+         <td>X position of object center in pixels.</td> </tr>
+    <tr> <td class="code">screen_position_y</td> <td>Real</td>
+         <td>Y position of object center in pixels.</td> </tr>
+    <tr> <td class="code">distance</td>          <td>Real</td>
+         <td>Distance to camera, meters.</td> </tr>
+    <tr> <td class="code">emotion</td>           <td>String</td>
+         <td><p>Person's emotion: <code>neutral</code>, <code>happy</code>,
+                <code>sad/perplexed</code>, <code>surprised/afraid</code>,
+                <code>angry/disgusted</code>.</p></td> </tr>
+    <tr> <td class="code">look</td>              <td>Boolean</td>
+         <td>If person looks at the camera.</td> </tr>
+    
+    <tr class="section-header"><td colspan="3">Statistic attributes</td></tr>
+    
+    <tr> <td class="code">dwell_time</td>   <td>Real</td>
+         <td>Time interval from first appearance to exit or current moment, milliseconds.</td> </tr>
+    <tr> <td class="code">face_time</td>    <td>Real</td>
+         <td>Sum of time intervals when person looked at the camera, milliseconds.</td> </tr>
+    <tr> <td class="code">look_counter</td> <td>Integer</td>
+         <td>Number of periods when person looked at the camera.</td> </tr>
+    
+    <tr class="section-header"><td colspan="3">Statistic parameters</td></tr>
+    
+    <tr> <td class="code">primary_gender</td> 
+         <td>String</td> 
+         <td>Gender of the Face object longest in view (for all view periods) during the current
+             session. If there are two or more objects with equal duration, the one that was
+             detected first is returned.<br />
+             <p>Value: <code>"male"</code>, <code>"female"</code> or <code>null</code> if no Face
+                objects have been seen yet.</p>
          </td> 
     </tr>
-    <tr> <td>majority_gender</td> 
-         <td>Integer</td> 
+    <tr> <td class="code">majority_gender</td> 
+         <td>String</td> 
          <td>Represents the current most prominent gender. The algorithm is as follows.<br />
              &emsp;Children younger than 10 years (for whom gender is not determined) are not counted.<br />
              &emsp;If there are no persons, return null.<br />
@@ -1443,7 +1533,8 @@ The following tables describes the fields.
              &emsp;Else compare sums of durations of last view periods for both genders. If one sum is greater, return corre­sponding gender.<br />
              &emsp;Else compare durations of last view periods for one male and one female with maximal values. If one is greater, return corresponding gender.<br />
              &emsp;Else return male gender.<br />
-             &emsp;Value: -1 for male, 1 for female, null if there are no active male or female Face objects.</td> 
+             <p>Value: <code>"male"</code>, <code>"female"</code> or <code>null</code> if there are no
+                active male or female Face objects.</p>
     </tr>
     <tr> <td>main_person</td> 
          <td>Integer</td> 
@@ -1459,7 +1550,10 @@ Here the DateTime type is String containing date and time written as UTC in ISO 
 
     YYYY-MM-DDTHH:MM:SS
 
-When data for time period is requested, returned values of classification attributes correspond to time moment exit_time.
+When data for time period is requested, returned values of social attributes correspond to time
+moment `exit_time`.
+
+
 
 ## Results for time periods  
 
@@ -1512,15 +1606,24 @@ The result would be:
             { 
                 "objects": [ 
                     { 
-                        "age": "24.8413", 
-                        "age_confidence": "0.489896", 
-                        "clean_exit": "false", 
+                        "age": 24.8413,
+                        "age_confidence": 0.489896,
+                        "clean_exit": false,
+                        "distance": 1.364,
+                        "dwell_time": 371967,
+                        "emotion": "neutral",
                         "enter_time": "2014-03-19T08:41:59", 
                         "exit_time": "2014-03-19T08:42:25", 
-                        "gender": "-1", 
-                        "gender_confidence": "0.460317", 
-                        "id": "0", 
-                        "session_id": "147", 
+                        "face_time": 284372,
+                        "gender": "male", 
+                        "gender_confidence": 0.460317,
+                        "id": 0,
+                        "look": true,
+                        "look_counter": 4,
+                        "race": "white",
+                        "screen_position_x": 385.732,
+                        "screen_position_y": 278.8638,
+                        "session_id": 147, 
                         "time_periods": [ 
                             { 
                                 "enter_time": "2014-03-19T08:41:59", 
@@ -1934,7 +2037,7 @@ where
         }
 
 Possible values of `<attribute>` are:<br/>
-for faces - `age`, `gender`, `emotion`, `race`, `look`, `distance`;<br/>
+for faces - `age`, `gender`, `race`, `emotion`, `look`, `distance`;<br/>
 for bodies - `distance`.<br/>
 Description of attributes see in `/data` resource section.
 The `"*"` means all attributes corresponding to object type specified by event class (face or body).
@@ -2033,13 +2136,11 @@ where
             "age": 32,
             "age_confidence": 0.87,
             "distance": 1.1,
-            "emotion": "smile",
-            "emotion_confidence": "0.73",
+            "emotion": "happy",
             "gender": "female",
             "gender_confidence": 0.78,
             "look": false,
-            "race": "europe",
-            "race_confidence": 0.76,
+            "race": "white",
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
@@ -2257,13 +2358,11 @@ where
             "age": 32,
             "age_confidence": 0.87,
             "distance": 1.1,
-            "emotion": "smile",
-            "emotion_confidence": 0.73,
+            "emotion": "happy",
             "gender": 1,
             "gender_confidence": 0.78,
             "look": true,
-            "race": "europe",
-            "race_confidence": 0.76,
+            "race": "white",
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
