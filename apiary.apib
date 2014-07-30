@@ -1338,6 +1338,7 @@ Social attributes:
     <tr> <td>age</td>               <td>Person age.</td> </tr>
     <tr> <td>age_confidence</td>    <td>Confidence of age value.</td> </tr>
     <tr> <td>race</td>              <td>Person race.</td> </tr>
+    <tr> <td>race_confidence</td>   <td>Confidence of race value.</td> </tr>
 </table>
 
 Only Face objects have social attributes. These attributes can be queried for time period
@@ -1349,14 +1350,15 @@ State attributes:
 <table>
          <th>Name</th> <th>Description</th>
     
-    <tr> <td>screen_position_x</td> <td>Position - X coordinate.</td> </tr>
-    <tr> <td>screen_position_y</td> <td>Position - Y coordinate.</td> </tr>
-    <tr> <td>distance</td>          <td>Distance to camera.</td> </tr>
-    <tr> <td>emotion</td>           <td>Person emotion.</td> </tr>
-    <tr> <td>look</td>              <td>If person looks at camera.</td> </tr>
+    <tr> <td>screen_position_x</td>  <td>Position - X coordinate.</td> </tr>
+    <tr> <td>screen_position_y</td>  <td>Position - Y coordinate.</td> </tr>
+    <tr> <td>distance</td>           <td>Distance to camera.</td> </tr>
+    <tr> <td>emotion</td>            <td>Person emotion.</td> </tr>
+    <tr> <td>emotion_confidence</td> <td>Confidence of emotion value.</td> </tr>
+    <tr> <td>look</td>               <td>If person looks at camera.</td> </tr>
 </table>
 
-Body objects do not have `look` attribute.
+Body objects do not have `emotion`, `emotion_confidence`, `look` attributes.
 
 State attributes can be queried only for current frame. 
 
@@ -1421,11 +1423,13 @@ The statistic parameters are (detailed description is in Response section):
             "gender": <gender>,
             "gender_confidence": <gender_confidence>,
             "race": <race>,
+            "race_confidence": <race_confidence>,
             
             "screen_position_x": <screen_position_x>,
             "screen_position_y": <screen_position_y>,
             "distance": <distance>,
             "emotion": <emotion>,
+            "emotion_confidence": <emotion_confidence>,
             "look": <look>,
 
             "dwell_time": <dwell_time>,
@@ -1487,20 +1491,24 @@ The following table describes the fields.
     <tr> <td class="code">race</td>              <td>String</td>
          <td><p>Person race: <code>white</code>, <code>black</code>, <code>asian</code>,
                 <code>arab</code>, <code>hispanic</code></p></td> </tr>
+    <tr> <td class="code">race_confidence</td>   <td>Real</td>
+         <td>Confidence of race value in interval [0, 1].</td> </tr>
     
     <tr class="section-header"><td colspan="3">State attributes</td></tr>
     
-    <tr> <td class="code">screen_position_x</td> <td>Real</td>
+    <tr> <td class="code">screen_position_x</td>  <td>Real</td>
          <td>X position of object center in pixels.</td> </tr>
-    <tr> <td class="code">screen_position_y</td> <td>Real</td>
+    <tr> <td class="code">screen_position_y</td>  <td>Real</td>
          <td>Y position of object center in pixels.</td> </tr>
-    <tr> <td class="code">distance</td>          <td>Real</td>
+    <tr> <td class="code">distance</td>           <td>Real</td>
          <td>Distance to camera, meters.</td> </tr>
-    <tr> <td class="code">emotion</td>           <td>String</td>
+    <tr> <td class="code">emotion</td>            <td>String</td>
          <td><p>Person's emotion: <code>neutral</code>, <code>happy</code>,
                 <code>sad/perplexed</code>, <code>surprised/afraid</code>,
                 <code>angry/disgusted</code>.</p></td> </tr>
-    <tr> <td class="code">look</td>              <td>Boolean</td>
+    <tr> <td class="code">emotion_confidence</td> <td>Real</td>
+         <td>Confidence of emotion value in interval [0, 1].</td> </tr>
+    <tr> <td class="code">look</td>               <td>Boolean</td>
          <td>If person looks at the camera.</td> </tr>
     
     <tr class="section-header"><td colspan="3">Statistic attributes</td></tr>
@@ -2137,10 +2145,12 @@ where
             "age_confidence": 0.87,
             "distance": 1.1,
             "emotion": "happy",
+            "emotion_confidence": 0.74,
             "gender": "female",
             "gender_confidence": 0.78,
             "look": false,
             "race": "white",
+            "race_confidence": 0.76,
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
@@ -2359,10 +2369,12 @@ where
             "age_confidence": 0.87,
             "distance": 1.1,
             "emotion": "happy",
-            "gender": 1,
+            "emotion_confidence": 0.74,
+            "gender": "female",
             "gender_confidence": 0.78,
-            "look": true,
+            "look": false,
             "race": "white",
+            "race_confidence": 0.76,
             "screen_position_x": 320,
             "screen_position_y": 467,
         }
