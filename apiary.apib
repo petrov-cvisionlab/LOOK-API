@@ -1884,7 +1884,9 @@ Conceptually the structure of this event is
         
         attribute:
         value:
-        range:   # For continuous attributes (see below)
+        previous_value:
+        range:            # For continuous attributes
+        previous_range:   # (see below)
     }
 
 
@@ -1896,6 +1898,7 @@ Conceptually the structure of this event is
         
         parameter:
         value:
+        previous_value:
     }
 
 
@@ -2077,7 +2080,9 @@ Filter for face gender or age change:
             "object_id": <object_id>,
             "attribute": <attribute>,
             "value": <value>,
-            "range": <range>
+            "previous_value": <previous_value>,
+            "range": <range>,
+            "previous_range": <previous_range>
         },
         object: <object>
     }
@@ -2113,9 +2118,20 @@ where
         <td>New attribute value.</td>
     </tr>
     <tr>
+        <td class="code">previous_value</td>
+        <td>Depends on attribute</td>
+        <td>Previous attribute value.</td>
+    </tr>
+    <tr>
         <td class="code">range</td>
         <td>String</td>
-        <td>Name of range new value falls into.<br/>
+        <td>Name of subrange new value falls into.<br/>
+            Present only for continuous attributes.</td>
+    </tr>
+    <tr>
+        <td class="code">previous_range</td>
+        <td>String</td>
+        <td>Name of subrange previous value falls into.<br/>
             Present only for continuous attributes.</td>
     </tr>
     <tr>
@@ -2129,6 +2145,9 @@ where
     </tr>
 </table>
 
+Note that `range` always has value different from `previous_range` because this is the essence of
+the event.
+
 
 ##### Examples
 
@@ -2138,7 +2157,8 @@ where
             "event_type": "face_attribute_change",
             "object_id": 11,
             "attribute": "gender",
-            "value": "female"
+            "value": "female",
+            "previous_value": "male"
         },
         "object": { 
             "age": 32,
@@ -2163,8 +2183,10 @@ where
             "event_type": "body_attribute_change",
             "object_id": 22,
             "attribute": "distance",
-            "value": 0.5
-            "range": "close"
+            "value": 0.5,
+            "previous_value": 1.1,
+            "range": "close",
+            "previous_range": "middle"
         },
         "object": { 
             "screen_position_x": 320,
@@ -2216,7 +2238,8 @@ Filter for `primary_gender` and `main_person` parameters change:
             "timestamp": <timestamp>,
             "event_class": "face_statistic_parameter_change",
             "parameter": <parameter>,
-            "value": <value>
+            "value": <value>,
+            "previous_value": <previous_value>
         },
         object: <object>
     }
@@ -2247,6 +2270,11 @@ where
         <td>New parameter value.</td>
     </tr>
     <tr>
+        <td class="code">previous_value</td>
+        <td>Depends on parameter</td>
+        <td>Previous parameter value.</td>
+    </tr>
+    <tr>
         <td class="code">object</td>
         <td>Object</td>
         <td><p>If parameter is <code>main_person</code>, this is state of object with ID specified
@@ -2266,7 +2294,8 @@ where
             "timestamp": 1362133259629,
             "event_type": "face_statistic_parameter_change",
             "parameter": "primary_gender",
-            "value": "male"
+            "value": "male",
+            "previous_value": "female"
         }
     }
 
