@@ -2059,14 +2059,14 @@ The `"*"` means all attributes corresponding to object type specified by event c
 Filter for any face attribute change:
 
     {
-        "event_type": "face_attribute_change",
+        "event_class": "face_attribute_change",
         "attribute": "*"
     }
     
 Filter for face gender or age change:
 
     {
-        "event_type": "face_attribute_change",
+        "event_class": "face_attribute_change",
         "attribute": ["gender", "age"]
     }
 
@@ -2154,7 +2154,7 @@ the event.
     {
         "event": {
             "timestamp": 1362133259629,
-            "event_type": "face_attribute_change",
+            "event_class": "face_attribute_change",
             "object_id": 11,
             "attribute": "gender",
             "value": "female",
@@ -2180,7 +2180,7 @@ the event.
     {
         "event": {
             "timestamp": 1362133259629,
-            "event_type": "body_attribute_change",
+            "event_class": "body_attribute_change",
             "object_id": 22,
             "attribute": "distance",
             "value": 0.5,
@@ -2226,7 +2226,7 @@ Filter for any statistic parameters change:
 Filter for `primary_gender` and `main_person` parameters change:
 
     {
-        "event_type": "face_statistic_parameter_change",
+        "event_class": "face_statistic_parameter_change",
         "parameter": ["primary_gender", "main_person"]
     }
 
@@ -2292,7 +2292,7 @@ where
     {
         "event": {
             "timestamp": 1362133259629,
-            "event_type": "face_statistic_parameter_change",
+            "event_class": "face_statistic_parameter_change",
             "parameter": "primary_gender",
             "value": "male",
             "previous_value": "female"
@@ -2323,14 +2323,14 @@ The `"*"` means either direction.
 Filter for faces entering and exiting the scene:
 
     {
-        "event_type": "face_scene_move",
+        "event_class": "face_scene_move",
         "interaction_direction": "*"
     }
     
 Filter for bodies entering the scene:
 
     {
-        "event_type": "body_scene_move",
+        "event_class": "body_scene_move",
         "interaction_direction": [ "in" ]
     }
 
@@ -2340,7 +2340,7 @@ Filter for bodies entering the scene:
     {
         "event": {
             "timestamp": <timestamp>,
-            "event_type": "face_scene_move" | "body_scene_move",
+            "event_class": "face_scene_move" | "body_scene_move",
             "object_id": <object_id>,
             "interaction_direction": <direction>
         },
@@ -2388,7 +2388,7 @@ where
 
     {
         "event": {
-            "event_type": "face_scene_move",
+            "event_class": "face_scene_move",
             "timestamp": 1362133259629,
             "object_id": 11,
             "interaction_direction": "in"
@@ -2412,7 +2412,7 @@ where
 
     {
         "event": {
-            "event_type": "body_scene_move",
+            "event_class": "body_scene_move",
             "timestamp": 1362133259629,
             "object_id": 22,
             "interaction_direction": "out"
@@ -2703,7 +2703,7 @@ where
 
     {
         "timestamp": 1362133259629,
-        "event_type": "article_interaction",
+        "event_class": "article_interaction",
         "object_id": 11,
         "interaction_type": "look",
         "interaction_direction": "begin",
