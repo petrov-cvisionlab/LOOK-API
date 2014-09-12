@@ -963,6 +963,86 @@ The value is empty string – it is write-only.
 
 The key _"modules"_ belong to engine settings, _"system"_ – to communication settings.
 
+
+LOOK has the following specific module parameters (in addition to platform):
+
+<table>
+         <th>Name</th>      <th>Type</th>
+         <th>Description</th>
+         <th>Requires restart</th>
+    
+    <tr class="section-header"><td colspan="4">VideoObjectsTracker module</td></tr>
+    
+    <tr><td class="code">camera_angle_of_view</td> <td>real</td>
+        <td>Camera's vertical angle of view, degrees.</td>
+        <td>yes</td>
+    </tr>
+    <tr class="section-header"><td colspan="4">DataService module</td></tr>
+    
+    <tr><td class="code">update_interval</td> <td>real</td>
+        <td><p>Interval between data snapshots, seconds.</p>
+            <p>A snapshot consists of records of all classification attributes for all current objects.
+            </p>
+            <p>When object enters or exits, the snapshot is stored regardless of interval and timer
+               restarts from that moment. When object exits, the snapshot for previous frame (last
+               frame object was seen on) is also saved.</p>
+            <p>If value is -1, timer is off and snapshots are made only on enter/exit.</p>
+        </td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">face_duration_threshold</td> <td>int</td>
+        <td>Duration of continuous period after which face is considered inactive, minutes.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">gender_confidence_threshold</td> <td>real</td>
+        <td>If gender confidence is lower than this threshold, gender is undefined.</td>
+        <td>yes</td>
+    </tr>
+    
+    <tr class="section-header"><td colspan="4">Visualizer module</td></tr>
+    
+    <tr><td class="code">hide_all</td> <td>bool</td>
+        <td>Turn off all visualization.</td>
+        <td>no</td>
+    </tr>
+    <tr><td class="code"><p>show_gender</p>
+                         <p>show_gender_confidence</p>
+                         <p>show_age</p>
+                         <p>show_age_confidence</p>
+                         <p>show_race</p>
+                         <p>show_race_confidence</p>
+                         <p>show_emotion</p>
+                         <p>show_emotion_confidence</p>
+                         <p>show_distance</p>
+        </td>
+        <td>bool</td>
+        <td>Visualize corresponding object attribute.</td>
+        <td>no</td>
+    </tr>
+    <tr><td class="code">show_age_mode</td> <td>string</td>
+        <td><p>Age visualization mode: <code>value</code> - single value; <code>group</code> - name
+               of range; <code>range</code> - numeric range.</p></td>
+        <td>no</td>
+    </tr>
+    <tr><td class="code">show_main_person</td> <td>bool</td>
+        <td>Show main person.</td>
+        <td>no</td>
+    </tr>
+    <tr><td class="code">not_detected_timeout</td> <td>real</td>
+        <td>Timeout for hiding not detected objects, sec.</td>
+        <td>no</td>
+    </tr>
+    <tr><td class="code">debug_output</td> <td>bool</td>
+        <td>Show debug output.</td>
+        <td>no</td>
+    </tr>
+</table>
+
+
+<br/>
+<br/>
+
+
 ## Current configuration [/config]
 
 ### Get current configuration [GET]
