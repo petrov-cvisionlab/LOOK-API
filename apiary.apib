@@ -87,6 +87,15 @@ and have no current session (can only retrieve data from previous sessions).
     <tr> <td>/notification_service</td> <td> Event notification. </td> </tr>
 </table>
 
+# Resources exposed by engine and data service
+<table>
+    <tr> 
+        <th bgcolor="#999999">Name</th> 
+        <th bgcolor="#999999">Function</th> 
+    </tr>
+    <tr> <td>/process_image</td> <td> Get object attributes from static image. </td> </tr>
+</table>
+
 # Request
 The Request-URI have form
 
@@ -3589,3 +3598,66 @@ No.
             }
 
 + Response 200
+
+
+
+
+
+
+
+
+
+
+# Group ImageProcessor
+
+This resource allows to get from static images information about objects attributes (age, gender, etc.)
+You need necessary set header "Content-Type: image/jpg" or "Content-Type: image/png"
+
+    JSON data  
+        { "objects": [ object-list ] },  
+    where  
+        object:<object>
+
+Event fields:
+
+<table>
+    <tr> 
+        <th bgcolor="#999999">Field</th>
+        <th bgcolor="#999999">Type</th>
+        <th bgcolor="#999999">Description</th>
+    </tr>
+    <td class="code">object</td>
+    <td>Object</td>
+    <td>
+        <p> All classification attributes ( attribute and it confidence ) and position
+    </td>
+</table>
+
+## POST /process_image
+
++ Request
+    + Headers
+    
+            Content-Type: image/jpg       
+
+
++ Response 200 (application/json)
+    + Body
+ 
+            { 
+                "objects" : [ 
+                    { 
+                        "age" : 10.0, 
+                        "emotion" : "perplexed", 
+                        "gender" : "male", 
+                        "look" : true, 
+                        "race" : "asian", 
+                        "screen_position_x" : 2027, 
+                        "screen_position_y" : 1329 
+                    } 
+                ] 
+            }
+
+
+
+
