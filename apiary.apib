@@ -87,15 +87,6 @@ and have no current session (can only retrieve data from previous sessions).
     <tr> <td>/notification_service</td> <td> Event notification. </td> </tr>
 </table>
 
-# Resources exposed by engine and data service
-<table>
-    <tr> 
-        <th bgcolor="#999999">Name</th> 
-        <th bgcolor="#999999">Function</th> 
-    </tr>
-    <tr> <td>/process_image</td> <td> Get object attributes from static image. </td> </tr>
-</table>
-
 # Request
 The Request-URI have form
 
@@ -1536,16 +1527,17 @@ The following table describes the fields.
          <td>Gender of the Face object longest in view (for all view periods) during the current
              session. If there are two or more objects with equal duration, the one that was
              detected first is returned.<br />
-             <p>Value: <code>"male"</code>, <code>"female"</code> or <code>null</code> if no Face
-                objects have been seen yet.</p>
+             <p>Note that objects with undefined gender are counted.</p>
+             <p>Value: <code>"male"</code>, <code>"female"</code>, <code>"undefined"</code> or
+                <code>null</code> if no Face objects have been seen yet.</p>
          </td> 
     </tr>
     <tr> <td class="code">majority_gender</td> 
          <td>String</td> 
          <td>Represents the current most prominent gender. The algorithm is as follows.<br />
-             &emsp;Children younger than 10 years (for whom gender is not determined) are not counted.<br />
-             &emsp;If there are no persons, return null.<br />
-             &emsp;Else, if number of persons of one gender in the current frame is greater, return that gender.<br />
+             &emsp;Objects with undefined gender are not counted.<br />
+             &emsp;If there are no objects, return null.<br />
+             &emsp;Else, if number of objects of one gender in the current frame is greater, return that gender.<br />
              &emsp;Else compare sums of confidences for both genders in the current frame. If one sum is greater, return corre­sponding gender.<br />
              &emsp;Else compare sums of durations of last view periods for both genders. If one sum is greater, return corre­sponding gender.<br />
              &emsp;Else compare durations of last view periods for one male and one female with maximal values. If one is greater, return corresponding gender.<br />
@@ -1556,9 +1548,9 @@ The following table describes the fields.
     <tr> <td>main_person</td> 
          <td>Integer</td> 
          <td> ID of face that:<br />
-              &emsp;1) has maximal  face_time parameter.<br />
+              &emsp;1) has maximal face_time parameter.<br />
               &emsp;2) has the minimal distance parameter. (for faces that satisfied the previous condition)<br />
-              &emsp;3) has dwell_time face_time parameter. (for faces that satisfied the previous conditions)<br />
+              &emsp;3) has maximal dwell_time parameter. (for faces that satisfied the previous conditions)<br />
         </td> 
     </tr>
 </table>
@@ -3598,66 +3590,3 @@ No.
             }
 
 + Response 200
-
-
-
-
-
-
-
-
-
-
-# Group ImageProcessor
-
-This resource allows to get from static images information about objects attributes (age, gender, etc.)
-You need necessary set header "Content-Type: image/jpg" or "Content-Type: image/png"
-
-    JSON data  
-        { "objects": [ object-list ] },  
-    where  
-        object:<object>
-
-Event fields:
-
-<table>
-    <tr> 
-        <th bgcolor="#999999">Field</th>
-        <th bgcolor="#999999">Type</th>
-        <th bgcolor="#999999">Description</th>
-    </tr>
-    <td class="code">object</td>
-    <td>Object</td>
-    <td>
-        <p> All classification attributes ( attribute and it confidence ) and position
-    </td>
-</table>
-
-## POST /process_image
-
-+ Request
-    + Headers
-    
-            Content-Type: image/jpg       
-
-
-+ Response 200 (application/json)
-    + Body
- 
-            { 
-                "objects" : [ 
-                    { 
-                        "age" : 10.0, 
-                        "emotion" : "perplexed", 
-                        "gender" : "male", 
-                        "look" : true, 
-                        "race" : "asian", 
-                        "screen_position_x" : 2027, 
-                        "screen_position_y" : 1329 
-                    } 
-                ] 
-            }
-
-
-
-
