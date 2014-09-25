@@ -1460,10 +1460,10 @@ Statistic attributes:
     <tr> <td>dwell_time</td>   <td>Time interval from first appearance to exit or current
                                    moment.</td> </tr>
     <tr> <td>face_time</td>    <td>Sum of time intervals when person looked at the camera.</td> </tr>
-    <tr> <td>look_counter</td> <td>Number of periods when person looked at the camera.</td> </tr>
+    <tr> <td>look_count</td> <td>Number of periods when person looked at the camera.</td> </tr>
 </table>
 
-Body objects do not have `face_time` and `look_counter` attributes.
+Body objects do not have `face_time` and `look_count` attributes.
 
 Statistic attributes can be queried for time period or current frame.
 
@@ -1523,7 +1523,7 @@ The statistic parameters are (detailed description is in Response section):
 
             "dwell_time": <dwell_time>,
             "face_time": <face_time>,
-            "look_counter": <look_counter>
+            "look_count": <look_count>
         }
     
     time-period:
@@ -1606,7 +1606,7 @@ The following table describes the fields.
          <td>Time interval from first appearance to exit or current moment, seconds.</td> </tr>
     <tr> <td class="code">face_time</td>    <td>Real</td>
          <td>Sum of time intervals when person looked at the camera, seconds.</td> </tr>
-    <tr> <td class="code">look_counter</td> <td>Integer</td>
+    <tr> <td class="code">look_count</td> <td>Integer</td>
          <td>Number of periods when person looked at the camera.</td> </tr>
     
     <tr class="section-header"><td colspan="3">Statistic parameters</td></tr>
@@ -1717,7 +1717,7 @@ The result would be:
                         "gender_confidence": 0.460317,
                         "id": 0,
                         "look": true,
-                        "look_counter": 4,
+                        "look_count": 4,
                         "race": "white",
                         "screen_position_x": 385.732,
                         "screen_position_y": 278.8638,
