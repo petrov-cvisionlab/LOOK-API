@@ -1417,7 +1417,7 @@ Time attributes:
 Time attributes can be queried only for time period, but not for the current frame.  
 
 
-Social attributes:
+Social attributes (constant attributes of a person):
 
 <table>
          <th>Name</th>              <th>Description</th>
@@ -1434,22 +1434,23 @@ Only Face objects have social attributes. These attributes can be queried for ti
 or current frame.
 
 
-State attributes:
+State attributes (instant person's state):
 
 <table>
-         <th>Name</th> <th>Description</th>
+         <th>Name</th> <th>Now</th> <th>Time interval</th>
     
-    <tr> <td>screen_position_x</td>  <td>Position - X coordinate.</td> </tr>
-    <tr> <td>screen_position_y</td>  <td>Position - Y coordinate.</td> </tr>
-    <tr> <td>distance</td>           <td>Distance to camera.</td> </tr>
-    <tr> <td>emotion</td>            <td>Person emotion.</td> </tr>
-    <tr> <td>emotion_confidence</td> <td>Confidence of emotion value.</td> </tr>
-    <tr> <td>look</td>               <td>If person looks at camera.</td> </tr>
+    <tr> <td>screen_position_x</td>  <td>Position - X coordinate.</td> <td>Sequence of object's X positions for given time interval.</td> </tr>
+    <tr> <td>screen_position_y</td>  <td>Position - Y coordinate.</td> <td>Sequence of object's Y positions for given time interval.</td> </tr>
+    <tr> <td>distance</td>           <td>Distance to camera.</td> <td>The closest distance to camera for given time interval.</td>  </tr>
+    <tr> <td>emotion</td>            <td>Person emotion.</td> <td>Sequence of person's emotions for given time interval.</td> </tr>
+    <tr> <td>emotion_confidence</td> <td>Confidence of emotion value.</td> <td>Sequence of confidences for emotion values for given time interval.</td> </tr>
+    <tr> <td>look</td>               <td>If person looks at camera.</td> <td>Sequence of look indicators.</td> </tr>
+    
 </table>
 
 Body objects do not have `emotion`, `emotion_confidence`, `look` attributes.
 
-State attributes can be queried only for current frame. 
+State attributes can be queried for current frame (or for time period, since Look 2.0a5). 
 
 
 Statistic attributes:
@@ -1523,13 +1524,25 @@ The statistic parameters are (detailed description is in Response section):
 
             "dwell_time": <dwell_time>,
             "face_time": <face_time>,
-            "look_count": <look_count>
+            "look_count": <look_count>,
+            
+            "states" : [ <state>-list ]
         }
     
     time-period:
         {
             "enter_time": <enter_time>,
             "exit_time": <exit_time>
+        }
+    
+    state:
+        {
+            "timestamp": <timestamp>,
+            "emotion": <emotion>,
+            "emotion_confidence": <emotion_confidence>,
+            "screen_position_x": <screen_position_x>,
+            "screen_position_y": <screen_position_y>,
+            "look": <look>
         }
         
 Some fields can be absent if they were not specified in query. The object-list can be empty.
@@ -1599,6 +1612,10 @@ The following table describes the fields.
          <td>Confidence of emotion value in interval [0, 1].</td> </tr>
     <tr> <td class="code">look</td>               <td>Boolean</td>
          <td>If person looks at the camera.</td> </tr>
+         
+    <tr class="section-header"><td colspan="3">States for time periods:</td></tr>
+    <tr> <td class="code">timestamp</td> <td>Integer</td>
+         <td>Number of milliseconds since 1970-01-01 00:00:00 UTC.</td>  </tr>
     
     <tr class="section-header"><td colspan="3">Statistic attributes</td></tr>
     
