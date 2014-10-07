@@ -3708,8 +3708,8 @@ No.
 
 # Group ImageProcessor
 
-This resource allows to get from static images information about objects attributes (age, gender, etc.)
-You are necessary need to set header "Content-Type: image/jpg" or "Content-Type: image/png".
+This resource allows to get object attributes (age, gender, etc.) from static images. 
+A header is required: "Content-Type: image/jpg" or "Content-Type: image/png".
 
     JSON data
     { "objects": [ object-list ] },
@@ -3724,7 +3724,7 @@ where
     <td class="code">object</td>
         <td>Object</td>
         <td>
-        <p> All social and static attributes, besides *distance*
+        <p> All social and static attributes except *distance*
     </td>
 </table>
 
