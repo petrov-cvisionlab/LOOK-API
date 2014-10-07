@@ -1462,6 +1462,7 @@ Statistic attributes:
                                    moment.</td> </tr>
     <tr> <td>face_time</td>    <td>Sum of time intervals when person looked at the camera.</td> </tr>
     <tr> <td>look_count</td> <td>Number of periods when person looked at the camera.</td> </tr>
+    <tr> <td>principal_emotion<sup>*</sup></td> <td>Prevalent person's emotion for all time or time interval.</td> </tr>
 </table>
 
 Body objects do not have `face_time` and `look_count` attributes.
@@ -1482,9 +1483,11 @@ The statistic parameters are (detailed description is in Response section):
     <tr> <td>primary_gender</td>  <td>Gender of the Face object longest in view (for all view periods)
                                       during the current session.</td> </tr>
     <tr> <td>majority_gender</td> <td>Current most prominent gender.</td> </tr>
+    <tr> <td>majority_emotion<sup>*</sup></td> <td>Current most prominent emotion.</td> </tr>
     <tr> <td>main_person</td>     <td>Most prominent person.</td> </tr>
 </table> 
 
+<sup>*</sup> - will be implemented in Look 2.0a6.
 
 
 # Response
@@ -1495,6 +1498,7 @@ The statistic parameters are (detailed description is in Response section):
         
         "primary_gender": <primary_gender>,
         "majority_gender": <majority_gender>,
+        "majority_emotion": <majority_emotion>,
         "main_person": <main_person>
     }
     
@@ -1525,6 +1529,7 @@ The statistic parameters are (detailed description is in Response section):
             "dwell_time": <dwell_time>,
             "face_time": <face_time>,
             "look_count": <look_count>,
+            "principal_emotion": <emotion>,
             
             "states" : [ <state>-list ]
         }
@@ -1625,6 +1630,14 @@ The following table describes the fields.
          <td>Sum of time intervals when person looked at the camera, seconds.</td> </tr>
     <tr> <td class="code">look_count</td> <td>Integer</td>
          <td>Number of periods when person looked at the camera.</td> </tr>
+    <tr> <td class="code">principal_emotion<sup>*</sup></td> <td>String</td>
+         <td><p>Person's prevalent emotion: <code>neutral</code>, <code>happy</code>,
+                <code>sad/perplexed</code>, <code>surprised/afraid</code>,
+                <code>angry/disgusted</code> or <code>undefined</code>.
+                <br/>For <code>time=now</code> queries it indicate the most common emotion for a person
+                during all session, for <code>time-time</code> queries - within given time interval.
+                <br/><code>undefined</code> value could be returned when the confidence of any specific value is low.</p>
+                </td> </tr>
     
     <tr class="section-header"><td colspan="3">Statistic parameters</td></tr>
     
@@ -1650,8 +1663,19 @@ The following table describes the fields.
              &emsp;Else return male gender.<br />
              <p>Value: <code>"male"</code>, <code>"female"</code> or <code>null</code> if there are no
                 active male or female Face objects.</p>
+        </td>
     </tr>
-    <tr> <td>main_person</td> 
+    <tr> <td class="code">majority_emotion<sup>*</sup></td> 
+         <td>String</td> 
+         <td><p>Represents the current most prominent emotion.
+         <br/>Value: <code>neutral</code>, <code>happy</code>,
+                <code>sad/perplexed</code>, <code>surprised/afraid</code>,
+                <code>angry/disgusted</code>, <code>undefined</code> or <code>null</code>
+                (if there are no active Face objects).
+            </p>
+        </td>
+    </tr>
+    <tr> <td class="code">main_person</td> 
          <td>Integer</td> 
          <td> ID of face that:<br />
               &emsp;1) has maximal face_time parameter.<br />
@@ -1660,6 +1684,9 @@ The following table describes the fields.
         </td> 
     </tr>
 </table>
+
+
+<sup>*</sup> - will be implemented in Look 2.0a6.
 
 Here the DateTime type is String containing date and time written as UTC in ISO 8601 extended format:
 
