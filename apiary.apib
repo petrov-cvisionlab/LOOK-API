@@ -1430,8 +1430,7 @@ Social attributes (constant attributes of a person):
     <tr> <td>race_confidence</td>   <td>Confidence of race value.</td> </tr>
 </table>
 
-Only Face objects have social attributes. These attributes can be queried for time period
-or current frame.
+Only Face objects have social attributes. These attributes can be queried for time period or current frame.
 
 
 State attributes (instant person's state):
@@ -1448,9 +1447,7 @@ State attributes (instant person's state):
     
 </table>
 
-Body objects do not have `emotion`, `emotion_confidence`, `look` attributes.
-
-State attributes can be queried for current frame (or for time period, since Look 2.0a5). 
+Only Face objects have state attributes. These attributes can be queried for time period or current frame.
 
 
 Statistic attributes:
@@ -1465,7 +1462,7 @@ Statistic attributes:
     <tr> <td>principal_emotion<sup>*</sup></td> <td>Prevalent person's emotion for all time or time interval.</td> </tr>
 </table>
 
-Body objects do not have `face_time` and `look_count` attributes.
+Body objects have `dwell_time` attribute only.
 
 Statistic attributes can be queried for time period or current frame.
 
@@ -1550,7 +1547,9 @@ The statistic parameters are (detailed description is in Response section):
             "look": <look>
         }
         
-Some fields can be absent if they were not specified in query. The object-list can be empty.
+Some fields can be absent if they were not specified in query.  
+The object-list can be empty.  
+Some fields can have <code>null</code> value, if they have no any data for time period.  
 
 The following table describes the fields.
 
@@ -1679,8 +1678,10 @@ The following table describes the fields.
          <td>Integer</td> 
          <td> ID of face that:<br />
               &emsp;1) has maximal face_time parameter.<br />
-              &emsp;2) has the minimal distance parameter. (for faces that satisfied the previous condition)<br />
-              &emsp;3) has maximal dwell_time parameter. (for faces that satisfied the previous conditions)<br />
+              &emsp;2) has the minimal distance parameter (for faces that satisfied the previous condition)<br />
+              &emsp;3) has maximal dwell_time parameter (for faces that satisfied the previous conditions)<br />
+              &emsp;4) the one that was detected first (for faces that satisfied the previous conditions)<br />
+              <p>Value: <code>ID</code> or <code>null</code> if there are no active objects.</p>
         </td> 
     </tr>
 </table>
