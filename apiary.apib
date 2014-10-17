@@ -1366,7 +1366,7 @@ is deleted, it can be recognized as the same object and assigned the same identi
 **exited** and **reentered** to a scene. When tracking system has deleted object's image, the object is **lost**. 
 Next time this object is detected it will be assigned other identifier.
 
-## GET /data?{type,time,columns,parameters}
+## GET /data{?type,time,columns,parameters}
 
 # Request
 
@@ -1466,8 +1466,6 @@ Body objects have `dwell_time` attribute only.
 
 Statistic attributes can be queried for time period or current frame.
 
-
-
 ### parameters
 List of statistic parameters to return.  
 Statistic parameters are properties of sets of objects as opposed to individual objects.  
@@ -1485,7 +1483,6 @@ The statistic parameters are (detailed description is in Response section):
 </table> 
 
 <sup>*</sup> - will be implemented in Look 2.0a6.
-
 
 # Response
 
@@ -1696,8 +1693,6 @@ Here the DateTime type is String containing date and time written as UTC in ISO 
 When data for time period is requested, returned values of social attributes correspond to time
 moment `exit_time`.
 
-
-
 ## Results for time periods  
 
 When request is made for a time period, the application determines which objects were in sight during this period and then returns the most complete information it has on that objects. The enter_time and exit_time parameters contain the very first (last) time an object was seen. So the enter_time might be before requested period and exit_time might be after it. The same applies to time_periods parameter - it contains all periods when person was in sight.  
@@ -1776,6 +1771,86 @@ The result would be:
                     }
                 ] 
             }
+
++ Parameters
+
+    + type (required, string, `Face`)
+    
+        Object type
+        
+        + Values
+        
+            + `Face`
+            
+            + `Body`
+            
+    + time (required, string, `now`)
+    
+        Discrete time or time period in format YYYY-MM-DDTHH:MM:SS-YYYY-MM-DDTHH:MM:SS
+        
+        + Values
+        
+            + `now`
+            
+            + `YYYY-MM-DDTHH:MM:SS-YYYY-MM-DDTHH:MM:SS`
+            
+    + columns (optional, string, `age`)
+    
+        List of possible values, format is comma-separated (without spaces), for example `age,gender`
+        
+        + Values
+        
+            + `enter_time`
+            
+            + `exit_time`
+            
+            + `time_periods`
+            
+            + `gender`
+            
+            + `gender_confidence`
+            
+            + `age`
+            
+            + `age_confidence`
+            
+            + `race`
+            
+            + `race_confidence`
+            
+            + `screen_position_x`
+            
+            + `screen_position_y`
+            
+            + `distance`
+            
+            + `emotion`
+            
+            + `emotion_confidence`
+            
+            + `look`
+            
+            + `dwell_time`
+            
+            + `face_time`
+            
+            + `look_count`
+            
+            + `principal_emotion`
+            
+    + parameters (optional, string, `primary_gender`)
+    
+        List of possible values, format is comma-separated (without spaces), for example `primary_gender,main_person`
+        
+        + Values
+        
+            + `primary_gender`
+            
+            + `majority_gender`
+            
+            + `majority_gender`
+            
+            + `main_person`
 
 
 
