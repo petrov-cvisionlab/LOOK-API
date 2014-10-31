@@ -2053,6 +2053,20 @@ has URL
             }
 
 
+## Get current snapshots [/snapshots/current]
+
+### Get snapshot image of last input frame [GET]
+This resource provides the possibility to get snapshot image of input video stream.  
+Input video stream is the stream produced by input device. It does not have markup.
+Image has PNG format. The image size is original.
+
+#Response
+Body contains snapshot image in PNG format. Content-Type is image/png.
+
+
++ Response 200 (image/png)
+
+
 
 
 
