@@ -1498,7 +1498,7 @@ Statistic attributes:
                                    moment.</td> </tr>
     <tr> <td>face_time</td>    <td>Sum of time intervals when person looked at the camera.</td> </tr>
     <tr> <td>look_count</td> <td>Number of periods when person looked at the camera.</td> </tr>
-    <tr> <td>principal_emotion<sup>*</sup></td> <td>Prevalent person's emotion for all time or time interval.</td> </tr>
+    <tr> <td>principal_emotion</td> <td>Prevalent person's emotion for all time or time interval.</td> </tr>
 </table>
 
 Body objects have `dwell_time` attribute only.
@@ -1517,11 +1517,9 @@ The statistic parameters are (detailed description is in Response section):
     <tr> <td>primary_gender</td>  <td>Gender of the Face object longest in view (for all view periods)
                                       during the current session.</td> </tr>
     <tr> <td>majority_gender</td> <td>Current most prominent gender.</td> </tr>
-    <tr> <td>majority_emotion<sup>*</sup></td> <td>Current most prominent emotion.</td> </tr>
+    <tr> <td>majority_emotion</td> <td>Current most prominent emotion.</td> </tr>
     <tr> <td>main_person</td>     <td>Most prominent person.</td> </tr>
 </table> 
-
-<sup>*</sup> - will be implemented in Look 2.0a6.
 
 # Response
 
@@ -1622,19 +1620,33 @@ The following table describes the fields.
     
     <tr class="section-header"><td colspan="3">Social attributes</td></tr>
     
-    <tr> <td class="code">age</td>               <td>Real</td>
-         <td>Person age.</td> </tr>
+    <tr> <td class="code">age</td>               
+         <td>Real</td>
+         <td>Person age. <p><code>Real</code></p>
+                         <p><code>undefined</code>, if confidence is low then threshold</p> 
+                         <p><code>null</code>, if there are no data</p>
+         </td> </tr>
     <tr> <td class="code">age_confidence</td>    <td>Real</td>
          <td>Confidence of age value in interval [0, 1].</td> </tr>
-    <tr> <td class="code">gender</td>            <td>String</td>
-         <td><p>Person gender: <code>male</code> or <code>female</code>.</p></td> </tr>
+         
+    <tr> <td class="code">gender</td>            
+         <td>String</td>
+         <td><p>Person gender: <code>male</code> or <code>female</code>.</p>
+             <p><code>undefined</code>, if confidence is low then threshold</p> 
+             <p><code>null</code>, if there are no data</p>
+         </td> </tr>
     <tr> <td class="code">gender_confidence</td> <td>Real</td>
          <td>Confidence of gender value in interval [0, 1].</td> </tr>
+         
     <tr> <td class="code">race</td>              <td>String</td>
          <td><p>Person race: <code>white</code>, <code>black</code>, <code>asian</code>,
-                <code>arab</code>, <code>hispanic</code></p></td> </tr>
+                <code>arab</code>, <code>hispanic</code></p>
+                <p><code>undefined</code>, if confidence is low then threshold</p> 
+                <p><code>null</code>, if there are no data</p>
+        </td> </tr>
     <tr> <td class="code">race_confidence</td>   <td>Real</td>
          <td>Confidence of race value in interval [0, 1].</td> </tr>
+         
     
     <tr class="section-header"><td colspan="3">State attributes</td></tr>
     
@@ -1647,7 +1659,10 @@ The following table describes the fields.
     <tr> <td class="code">emotion</td>            <td>String</td>
          <td><p>Person's emotion: <code>neutral</code>, <code>happy</code>,
                 <code>sad/perplexed</code>, <code>surprised/afraid</code>,
-                <code>angry/disgusted</code>.</p></td> </tr>
+                <code>angry/disgusted</code>.</p>
+                <p><code>undefined</code>, if confidence is low then threshold</p> 
+                <p><code>null</code>, if there are no data</p>
+        </td> </tr>
     <tr> <td class="code">emotion_confidence</td> <td>Real</td>
          <td>Confidence of emotion value in interval [0, 1].</td> </tr>
     <tr> <td class="code">look</td>               <td>Boolean</td>
@@ -1665,13 +1680,14 @@ The following table describes the fields.
          <td>Sum of time intervals when person looked at the camera, seconds.</td> </tr>
     <tr> <td class="code">look_count</td> <td>Integer</td>
          <td>Number of periods when person looked at the camera.</td> </tr>
-    <tr> <td class="code">principal_emotion<sup>*</sup></td> <td>String</td>
+    <tr> <td class="code">principal_emotion</td> <td>String</td>
          <td><p>Person's prevalent emotion: <code>neutral</code>, <code>happy</code>,
                 <code>sad/perplexed</code>, <code>surprised/afraid</code>,
                 <code>angry/disgusted</code> or <code>undefined</code>.
                 <br/>For <code>time=now</code> queries it indicate the most common emotion for a person
                 during all session, for <code>time-time</code> queries - within given time interval.
                 <br/><code>undefined</code> value could be returned when the confidence of any specific value is low.</p>
+                <p><code>null</code>, if there are no data</p>
                 </td> </tr>
     
     <tr class="section-header"><td colspan="3">Statistic parameters</td></tr>
@@ -1700,7 +1716,7 @@ The following table describes the fields.
                 active male or female Face objects.</p>
         </td>
     </tr>
-    <tr> <td class="code">majority_emotion<sup>*</sup></td> 
+    <tr> <td class="code">majority_emotion</td> 
          <td>String</td> 
          <td><p>Represents the current most prominent emotion.
          <br/>Value: <code>neutral</code>, <code>happy</code>,
@@ -1721,9 +1737,6 @@ The following table describes the fields.
         </td> 
     </tr>
 </table>
-
-
-<sup>*</sup> - will be implemented in Look 2.0a6.
 
 Here the DateTime type is String containing date and time written as UTC in ISO 8601 extended format:
 
@@ -1887,7 +1900,7 @@ The result would be:
             
             + `majority_gender`
             
-            + `majority_gender`
+            + `majority_emotion`
             
             + `main_person`
 
