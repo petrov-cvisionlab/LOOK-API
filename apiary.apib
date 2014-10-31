@@ -976,18 +976,20 @@ The key _"modules"_ belong to engine settings, _"system"_ – to communication s
 LOOK has the following specific module parameters (in addition to platform):
 
 <table>
-         <th>Name</th>      <th>Type</th>
+         <th>Name</th>      
+         <th>Type</th>
          <th>Description</th>
          <th>Requires restart</th>
     
-    <tr class="section-header"><td colspan="4">VideoObjectsTracker module</td></tr>
     
+    <tr class="section-header"><td colspan="4">VideoObjectsTracker module</td></tr>
     <tr><td class="code">camera_angle_of_view</td> <td>real</td>
         <td>Camera's vertical angle of view, degrees.</td>
         <td>yes</td>
     </tr>
-    <tr class="section-header"><td colspan="4">DataService module</td></tr>
     
+    
+    <tr class="section-header"><td colspan="4">DataService module</td></tr>
     <tr><td class="code">update_interval</td> <td>real</td>
         <td><p>Interval between data snapshots, seconds.</p>
             <p>A snapshot consists of records of all classification attributes for all current objects.
@@ -1000,16 +1002,53 @@ LOOK has the following specific module parameters (in addition to platform):
         <td>yes</td>
     </tr>
     <tr><td class="code">face_duration_threshold</td> <td>int</td>
-        <td>Duration of continuous period after which face is considered inactive, minutes.</td>
+        <td>Duration of continuous period after which face is considered inactive, minutes. 
+            This parameter does not have effect</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">age_confidence_threshold</td> <td>real</td>
+        <td>If age confidence is lower than this threshold, age is undefined.</td>
         <td>yes</td>
     </tr>
     <tr><td class="code">gender_confidence_threshold</td> <td>real</td>
         <td>If gender confidence is lower than this threshold, gender is undefined.</td>
         <td>yes</td>
     </tr>
+    <tr><td class="code">race_confidence_threshold</td> <td>real</td>
+        <td>If race confidence is lower than this threshold, race is undefined.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">emotion_confidence_threshold</td> <td>real</td>
+        <td>If emotion confidence is lower than this threshold, emotion is undefined.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">age_group_confidence_threshold</td> <td>real</td>
+        <td>If age confidence for time request is lower than this threshold, age for time request is undefined.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">gender_group_confidence_threshold</td> <td>real</td>
+        <td>If primary_gender confidence or majority_gender confidence or gender confidence for time request is 
+            lower than this threshold, primary_gender or majority_gender or gender for time request is undefined.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">race_group_confidence_threshold</td> <td>real</td>
+        <td>If race confidence for time request is lower than this threshold, race for time request is undefined.</td>
+        <td>yes</td>
+    </tr>
+    <tr><td class="code">emotion_group_confidence_threshold</td> <td>real</td>
+        <td>If principal_emotion confidence or majority_emotion confidence or emotion confidence for time request is
+            lower than this threshold, principal_emotion or majority_emotion or emotion for time request is undefined.</td>
+        <td>yes</td>
+    </tr>
+    
+    
+    <tr class="section-header"><td colspan="4">ImageProcessor module</td></tr>
+    <tr><td class="code">gender_confidence_threshold</td> <td>real</td>
+        <td>If gender confidence is lower than this threshold, gender is undefined.</td>
+        <td>yes</td>
+    </tr>
     
     <tr class="section-header"><td colspan="4">Visualizer module</td></tr>
-    
     <tr><td class="code">hide_all</td> <td>bool</td>
         <td>Turn off all visualization.</td>
         <td>no</td>
