@@ -3502,7 +3502,13 @@ Continuous attributes are:
 <table>
     <th>Object type</th> <th>Attributes</th>
     
-    <tr class="code"> <td>face</td>   <td>age<br/>distance</td> </tr>
+    <tr class="code"> <td>face</td>   <td>
+                                            age<br/>
+                                            distance<br/>
+                                            age_confidence<br/>
+                                            gender_confidence<br/>
+                                            race_confidence<br/>
+                                            emotion_confidence</td> </tr>
     <tr class="code"> <td>body</td>   <td>distance. This attribute does not have effect.</td> </tr>
 </table>
 
@@ -3548,7 +3554,11 @@ No.
     {
         "face": {
             "age": <Subranges>,
-            "distance": <Subranges>
+            "distance": <Subranges>,
+            "age_confidence": <Subranges>,
+            "gender_confidence": <Subranges>,
+            "race_confidence": <Subranges>,
+            "emotion_confidence": <Subranges>
         },
         "body": {
             "distance": <Subranges>
@@ -3596,7 +3606,11 @@ No.
     {
         "face": {
             "age": <Subranges>,
-            "distance": <Subranges>
+            "distance": <Subranges>,
+            "age_confidence": <Subranges>,
+            "gender_confidence": <Subranges>,
+            "race_confidence": <Subranges>,
+            "emotion_confidence": <Subranges>
         },
         "body": {
             "distance": <Subranges>
@@ -3792,6 +3806,14 @@ No.
             + `age`
             
             + `distance`
+            
+            + `age_confidence`
+            
+            + `gender_confidence`
+            
+            + `race_confidence`
+            
+            + `emotion_confidence`
 
 
 
