@@ -2332,7 +2332,8 @@ where
         }
 
 Possible values of `<attribute>` are:<br/>
-for faces - `age`, `gender`, `race`, `emotion`, `look`, `distance`;<br/>
+for faces - `age`, `age_confidence`, `gender`, `gender_confidence`, 
+`race`, `race_confidence`, `emotion`, `emotion_confidence`, `look`, `distance`;<br/>
 for bodies - `distance`. This filter has no effect.<br/>
 Description of attributes see in `/data` resource section.
 The `"*"` means all attributes corresponding to object type specified by event class (face or body).
@@ -2493,7 +2494,7 @@ the event.
             "parameter": [ <parameter>-list ] | "*"
         }
     
-where `<parameter>` is one of `primary_gender`, `majority_gender` or `main_person`. Description
+where `<parameter>` is one of `primary_gender`, `majority_gender`, `majority_emotion` or `main_person`. Description
 of parameters see in `/data` resource section.
 The `"*"` means all attributes corresponding to object type specified by event class (face).
 
