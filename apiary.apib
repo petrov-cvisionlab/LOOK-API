@@ -2117,13 +2117,17 @@ where
 <table>
     <th>Field</th>              <th>Type</th>    <th>Description</th>
     
-    <tr> <td>id</td>            <td>Integer</td>
-         <td>Subscriber ID.<br/>
-             This field is read-only.</td> </tr>
-    <tr> <td>url</td>           <td>String</td>
-         <td>URL which receives HTTP request on event.</td> </tr>
-    <tr> <td>method</td>        <td>String</td>
-         <td>HTTP method used in request to subscriber on event.</td> </tr>
+    <tr><td>id</td>            
+        <td>Integer</td>
+        <td>Subscriber ID.<br/>
+            This field is read-only.</td> </tr>
+    <tr><td>url</td>
+        <td>String</td>
+        <td>URL which receives HTTP request on event.</td> </tr>
+    <tr><td>method</td>
+        <td>String</td>
+        <td>HTTP method used in request to subscriber on event. <br/>
+            Now only <code>PUT</code> and <code>POST</code> are available.</td> </tr>
     <tr> <td>event_filters</td> <td>Array</td>
          <td>Filters defining which events this subscriber receives.<br/>
              Conceptually this field specifies <b>subscriptions</b> of the subscriber.<br/>
